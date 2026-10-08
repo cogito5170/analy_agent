@@ -99,6 +99,7 @@ jobs:
           export SITE_URL=http://localhost:8080/
           node trip_optimizer/web/tests/smoke.mjs
           node trip_optimizer/web/tests/error_test.mjs
+          node trip_optimizer/web/tests/e2e_v7.mjs
           
       - name: Upload Screenshot
         uses: actions/upload-artifact@v7

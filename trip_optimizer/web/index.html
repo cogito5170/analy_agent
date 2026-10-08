@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <title>Trip Optimizer</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         textarea { width: 100%; font-family: monospace; }
         .error { color: red; }
+        .err-span { color: red; }
         .plan { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
         footer { margin-top: 40px; font-size: 0.8em; color: #666; }
+        .day { margin-left: 20px; }
     </style>
 </head>
 <body>
@@ -28,16 +30,16 @@
     <button id="btnExample">Load Example Dataset</button>
     <p id="exampleNote" style="display:none; color: #555;"><i>Note: Prices in this example dataset are entirely invented!</i></p>
 
-    <h3>Visit Cities (city,min_stay,max_stay)</h3>
+    <h3>Visit Cities (city,min_stay,max_stay) <span id="visitLinesError" class="err-span"></span></h3>
     <textarea id="visitLines" rows="5">Tokyo,2,4
 Osaka,1,3
 Kyoto,2,4
 Fukuoka,1,2</textarea>
     
-    <h3>Transport CSV (from,to,date,mode,price,minutes)</h3>
+    <h3>Transport CSV (from,to,date,mode,price,minutes) <span id="transportLinesError" class="err-span"></span></h3>
     <textarea id="transportLines" rows="8"></textarea>
     
-    <h3>Lodging CSV (city,date,price)</h3>
+    <h3>Lodging CSV (city,date,price) <span id="lodgingLinesError" class="err-span"></span></h3>
     <textarea id="lodgingLines" rows="5"></textarea>
     
     <br><br>
@@ -52,12 +54,17 @@ Fukuoka,1,2</textarea>
     </footer>
 
     <script type="module">
-        import { parseData, getExampleData } from './model.mjs';
+        import { parseData, getExampleData, encodeState, decodeState } from './model.mjs';
 
-        // Example dataset generation
+        function el(tag, text, children = []) {
+            const e = document.createElement(tag);
+            if (text !== null) e.textContent = text;
+            children.forEach(c => e.appendChild(c));
+            return e;
+        }
+
         document.getElementById('btnExample').addEventListener('click', () => {
             document.getElementById('exampleNote').style.display = 'block';
-            
             const data = getExampleData();
             document.getElementById('startCity').value = data.startCity;
             document.getElementById('endCity').value = data.endCity;
@@ -72,24 +79,24 @@ Fukuoka,1,2</textarea>
         
         let pendingResolve = null;
         let pendingReject = null;
+        let workerDead = false;
 
         worker.onmessage = (e) => {
             const data = e.data;
             if (data.type === 'ready') {
                 console.log("Worker ready");
+                checkHashAndRun();
             } else if (data.type === 'error') {
                 if (pendingReject) pendingReject(new Error(data.error));
             } else if (data.type === 'success') {
                 if (pendingResolve) pendingResolve(data);
             }
         };
-        let workerDead = false;
         worker.onerror = (e) => {
             console.error("Worker error:", e);
             workerDead = true;
             if (pendingReject) pendingReject(new Error(e.message || "Worker failed to load"));
             else {
-                // Initial load error
                 document.getElementById('status').textContent = "Worker failed to load: " + (e.message || "Unknown error");
                 document.getElementById('status').className = 'error';
             }
@@ -97,54 +104,91 @@ Fukuoka,1,2</textarea>
 
         worker.postMessage({ type: 'init' });
 
+        function getInputState() {
+            return {
+                startCity: document.getElementById('startCity').value.trim(),
+                endCity: document.getElementById('endCity').value.trim(),
+                visitLines: document.getElementById('visitLines').value,
+                transportLines: document.getElementById('transportLines').value,
+                lodgingLines: document.getElementById('lodgingLines').value,
+                startDate: document.getElementById('startDate').value,
+                days: parseInt(document.getElementById('days').value, 10),
+                costPerMinute: parseInt(document.getElementById('costPerMinute').value, 10),
+                k: 5
+            };
+        }
+
+        function setInputState(data) {
+            document.getElementById('startCity').value = data.startCity;
+            document.getElementById('endCity').value = data.endCity;
+            document.getElementById('startDate').value = data.startDate;
+            document.getElementById('days').value = data.days;
+            document.getElementById('costPerMinute').value = data.costPerMinute;
+            document.getElementById('visitLines').value = data.visitLines;
+            document.getElementById('transportLines').value = data.transportLines;
+            document.getElementById('lodgingLines').value = data.lodgingLines;
+        }
+
+        function checkHashAndRun() {
+            if (window.location.hash.length > 2) {
+                const s = decodeState(window.location.hash);
+                if (s) {
+                    setInputState(s);
+                    document.getElementById('btnOptimize').click();
+                }
+            }
+        }
+
         document.getElementById('btnOptimize').addEventListener('click', async () => {
             const statusDiv = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
             const noticesDiv = document.getElementById('notices');
             
+            // clear errors
+            ['visitLines', 'transportLines', 'lodgingLines'].forEach(id => {
+                document.getElementById(id + 'Error').textContent = '';
+            });
+
             if (workerDead) {
-                statusDiv.innerHTML = 'Worker failed to load. Please refresh the page.';
+                statusDiv.textContent = 'Worker failed to load. Please refresh the page.';
                 statusDiv.className = 'error';
                 return;
             }
             
-            statusDiv.innerHTML = 'Parsing data...';
+            statusDiv.textContent = 'Parsing data...';
             statusDiv.className = '';
             resultsDiv.innerHTML = '';
             noticesDiv.innerHTML = '';
             
+            const rawInput = getInputState();
             let parsed;
             try {
-                parsed = parseData({
-                    startCity: document.getElementById('startCity').value.trim(),
-                    endCity: document.getElementById('endCity').value.trim(),
-                    visitLines: document.getElementById('visitLines').value,
-                    transportLines: document.getElementById('transportLines').value,
-                    lodgingLines: document.getElementById('lodgingLines').value,
-                    startDate: document.getElementById('startDate').value,
-                    days: parseInt(document.getElementById('days').value, 10),
-                    costPerMinute: parseInt(document.getElementById('costPerMinute').value, 10),
-                    k: 5
-                });
+                parsed = parseData(rawInput);
             } catch (err) {
-                statusDiv.textContent = `Error parsing data: ${err.message}`;
+                if (err.inputId) {
+                    const span = document.getElementById(err.inputId + 'Error');
+                    if (span) {
+                        span.textContent = ` (Line ${err.lineNum || '?'}: ${err.message})`;
+                    }
+                    statusDiv.textContent = 'Validation error. Please check the inputs.';
+                } else {
+                    statusDiv.textContent = `Error parsing data: ${err.message}`;
+                }
                 statusDiv.className = 'error';
                 return;
             }
             
+            window.history.replaceState(null, '', '#' + encodeState(rawInput));
+
             let notices = [];
-            if (parsed.skippedLines > 0) {
-                console.warn(`Skipped ${parsed.skippedLines} out-of-window lines`);
-                notices.push(`Skipped ${parsed.skippedLines} out-of-window lines.`);
-            }
-            if (!document.getElementById('lodgingLines').value.trim()) {
-                notices.push('숙박비 미포함');
-            }
+            if (parsed.skippedLines > 0) notices.push(`Skipped ${parsed.skippedLines} out-of-window lines.`);
+            if (!document.getElementById('lodgingLines').value.trim()) notices.push('숙박비 미포함');
+            
             if (notices.length > 0) {
                 noticesDiv.textContent = notices.join(' | ');
             }
             
-            statusDiv.innerHTML = 'Optimizing...';
+            statusDiv.textContent = 'Optimizing...';
             
             try {
                 const res = await new Promise((resolve, reject) => {
@@ -153,35 +197,55 @@ Fukuoka,1,2</textarea>
                     worker.postMessage({ type: 'optimize', payload: parsed });
                 });
                 
-                statusDiv.innerHTML = `Found ${res.numPlans} plans.`;
-                
+                statusDiv.textContent = `Found ${res.numPlans} plans.`;
                 if (res.numPlans === 0) {
-                    statusDiv.innerHTML += ' No valid plans found.';
+                    statusDiv.textContent += ' No valid plans found.';
                     return;
                 }
                 
-                const plans = res.plans;
+                const cpm = rawInput.costPerMinute;
                 
-                plans.forEach((plan, i) => {
+                res.plans.forEach((plan, i) => {
                     const div = document.createElement('div');
                     div.className = 'plan';
                     
-                    let html = `<h4>Plan ${i + 1} (Total Cost: ${plan.objective})</h4>`;
-                    html += `<p>Transport: ${plan.transport_price}, Lodging: ${plan.lodging_price}, Travel Minutes: ${plan.travel_minutes}</p>`;
+                    div.appendChild(el('h4', `Plan ${i + 1} (Total Cost: ${plan.objective})`));
                     
-                    html += `<h5>Legs</h5><ul>`;
+                    const timeValue = plan.travel_minutes * cpm;
+                    const sum = plan.transport_price + plan.lodging_price + timeValue;
+                    
+                    const costUl = el('ul', null, [
+                        el('li', `Transport: ${plan.transport_price}`),
+                        el('li', `Lodging: ${plan.lodging_price}`),
+                        el('li', `Time Value: ${timeValue} (${plan.travel_minutes} min * ${cpm})`),
+                        el('li', `Sum: ${sum}`)
+                    ]);
+                    div.appendChild(el('h5', 'Cost Breakdown'));
+                    div.appendChild(costUl);
+
+                    // Timeline
+                    const timelineUl = el('ul', null);
+                    const timelineEvents = [];
+                    plan.legs.forEach(l => timelineEvents.push({ date: l.date, text: `${l.from} -> ${l.to} (${l.mode}, ${l.minutes} min)` }));
+                    plan.stays.forEach(s => timelineEvents.push({ date: s.arriveDate, text: `Stay in ${s.city} (${s.nights} nights)` }));
+                    timelineEvents.sort((a, b) => a.date.localeCompare(b.date));
+                    timelineEvents.forEach(e => {
+                        timelineUl.appendChild(el('li', `${e.date}: ${e.text}`));
+                    });
+                    div.appendChild(el('h5', 'Timeline'));
+                    div.appendChild(timelineUl);
+                    
+                    // Booking List
+                    const bookUl = el('ul', null);
                     plan.legs.forEach(l => {
-                        html += `<li>${l.date} ${l.from} -> ${l.to} (${l.mode}): ${l.price} won, ${l.minutes} min</li>`;
+                        bookUl.appendChild(el('li', `[Leg] ${l.date} ${l.from} -> ${l.to} : ${l.price} won`));
                     });
-                    html += `</ul>`;
-                    
-                    html += `<h5>Stays</h5><ul>`;
                     plan.stays.forEach(s => {
-                        html += `<li>${s.arriveDate}: ${s.nights} nights in ${s.city} (Lodging: ${s.price} won)</li>`;
+                        bookUl.appendChild(el('li', `[Stay] ${s.arriveDate} in ${s.city} for ${s.nights} nights : ${s.price} won`));
                     });
-                    html += `</ul>`;
+                    div.appendChild(el('h5', 'Booking List'));
+                    div.appendChild(bookUl);
                     
-                    div.innerHTML = html;
                     resultsDiv.appendChild(div);
                 });
             } catch (err) {

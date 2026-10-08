@@ -21,6 +21,8 @@ import { chromium } from 'playwright';
     await page.goto(siteUrl);
     await page.click('#btnExample');
     await page.fill('#visitLines', ''); // Empty visit list
+    await page.fill('#transportLines', ''); // Clear to avoid parse errors
+    await page.fill('#lodgingLines', '');
     await page.click('#btnOptimize');
     // It should leave the Optimizing state and show an error in #status
     await page.waitForSelector('.error', { timeout: 10000 });

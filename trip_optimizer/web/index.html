@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Trip Optimizer</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         textarea { width: 100%; font-family: monospace; }
-        .error { color: red; }
-        .err-span { color: red; }
+        .error { color: #cc0000; }
+        .err-span { color: #cc0000; }
         .plan { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
         footer { margin-top: 40px; font-size: 0.8em; color: #666; }
         .day { margin-left: 20px; }
@@ -30,16 +31,16 @@
     <button id="btnExample">Load Example Dataset</button>
     <p id="exampleNote" style="display:none; color: #555;"><i>Note: Prices in this example dataset are entirely invented!</i></p>
 
-    <h3>Visit Cities (city,min_stay,max_stay) <span id="visitLinesError" class="err-span"></span></h3>
+    <h3><label for="visitLines">Visit Cities (city,min_stay,max_stay)</label> <span id="visitLinesError" class="err-span"></span></h3>
     <textarea id="visitLines" rows="5">Tokyo,2,4
 Osaka,1,3
 Kyoto,2,4
 Fukuoka,1,2</textarea>
     
-    <h3>Transport CSV (from,to,date,mode,price,minutes) <span id="transportLinesError" class="err-span"></span></h3>
+    <h3><label for="transportLines">Transport CSV (from,to,date,mode,price,minutes)</label> <span id="transportLinesError" class="err-span"></span></h3>
     <textarea id="transportLines" rows="8"></textarea>
     
-    <h3>Lodging CSV (city,date,price) <span id="lodgingLinesError" class="err-span"></span></h3>
+    <h3><label for="lodgingLines">Lodging CSV (city,date,price)</label> <span id="lodgingLinesError" class="err-span"></span></h3>
     <textarea id="lodgingLines" rows="5"></textarea>
     
     <br><br>

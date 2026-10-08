@@ -41,11 +41,25 @@ jobs:
           ./v5_generator > native_v5.log
           cat native_v5.log
           MEDIAN=$(grep 'Native V5 median time' native_v5.log | awk '{print $5}')
-          BUDGET=$(grep 'Native Budget:' ../../docs/perf.md | awk '{print $3}')
+          BUDGET=$(grep 'Native Budget:' ../../docs/perf.md | awk -F': ' '{print $2}' | awk '{print $1}')
           echo "Native V5 median time: $MEDIAN ms"
           echo "Native Budget: $BUDGET ms"
           if (( $(echo "$MEDIAN > $BUDGET" | bc -l) )); then
             echo "Error: Native performance exceeded budget!"
+            exit 1
+          fi
+
+      - name: Verify budget gate fails below median
+        run: |
+          cd trip_optimizer/engine/build
+          MEDIAN=$(grep 'Native V5 median time' native_v5.log | awk '{print $5}')
+          TIGHT_BUDGET=$(echo "$MEDIAN / 2" | bc -l)
+          echo "Native V5 median time: $MEDIAN ms"
+          echo "Tight Budget: $TIGHT_BUDGET ms"
+          if (( $(echo "$MEDIAN > $TIGHT_BUDGET" | bc -l) )); then
+            echo "Expected failure checked: gate caught tight budget"
+          else
+            echo "Error: gate failed to fire"
             exit 1
           fi
           
@@ -66,6 +80,7 @@ jobs:
   web:
     runs-on: ubuntu-latest
     needs: engine
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
       
@@ -98,6 +113,7 @@ jobs:
           node trip_optimizer/engine/tests/v4_check.mjs
           
       - name: Run Web Tests
+        timeout-minutes: 1
         run: |
           cd trip_optimizer/web
           node --test tests/model.test.mjs
@@ -120,6 +136,7 @@ jobs:
           npx playwright install --with-deps chromium
           
       - name: Run Smoke Test
+        timeout-minutes: 2
         run: |
           npx http-server site -p 8080 &
           sleep 3
@@ -130,6 +147,7 @@ jobs:
           node trip_optimizer/web/tests/v5_perf.mjs
           
       - name: Run Lighthouse
+        timeout-minutes: 2
         run: |
           npm install -g lighthouse@12.2.0
           lighthouse http://localhost:8080/ --output json --output-path lighthouse.json --chrome-flags="--headless"
@@ -210,6 +228,7 @@ jobs:
           npx playwright install --with-deps chromium
           
       - name: Run Smoke Test Against Deployed URL
+        timeout-minutes: 2
         run: |
           export SITE_URL="${{ steps.deployment.outputs.page_url }}"
           node trip_optimizer/web/tests/smoke.mjs

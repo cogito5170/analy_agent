@@ -44,7 +44,7 @@ import { chromium } from 'playwright';
     await page3.waitForSelector('.error', { timeout: 10000 });
     const statusText3 = await page3.innerText('#status');
     console.log("init error message shown:", statusText3);
-    if (!statusText3.includes('failed') && !statusText3.includes('Error')) {
+    if (!statusText3.toLowerCase().includes('failed') && !statusText3.includes('Error')) {
         console.error("Test 3 Failed");
         process.exit(1);
     }

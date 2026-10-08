@@ -41,7 +41,7 @@ jobs:
           ./v5_generator > native_v5.log
           cat native_v5.log
           MEDIAN=$(grep 'Native V5 median time' native_v5.log | awk '{print $5}')
-          BUDGET=$(grep 'Native Budget:' ../../../docs/perf.md | awk '{print $3}')
+          BUDGET=$(grep 'Native Budget:' ../../docs/perf.md | awk '{print $3}')
           echo "Native V5 median time: $MEDIAN ms"
           echo "Native Budget: $BUDGET ms"
           if (( $(echo "$MEDIAN > $BUDGET" | bc -l) )); then

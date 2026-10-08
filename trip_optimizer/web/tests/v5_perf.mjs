@@ -5,7 +5,7 @@ import fs from 'fs';
     let nativeBudget = Infinity;
     let webBudget = Infinity;
     try {
-        const perfMd = fs.readFileSync('../../docs/perf.md', 'utf8');
+        const perfMd = fs.readFileSync('trip_optimizer/docs/perf.md', 'utf8');
         const nativeMatch = perfMd.match(/Native Budget: ([\d.]+) ms/);
         const webMatch = perfMd.match(/Web Budget: ([\d.]+) ms/);
         if (nativeMatch) nativeBudget = parseFloat(nativeMatch[1]);

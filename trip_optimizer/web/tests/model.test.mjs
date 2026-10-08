@@ -4,36 +4,40 @@ import { parseData, decodePlans, encodeState, decodeState } from '../model.mjs';
 
 test('parseData: CSV parsing and error line numbers', () => {
     // Unknown city on transport
+    let err = null;
     try {
         parseData({
             startCity: 'Seoul', endCity: 'Seoul',
             visitLines: 'Tokyo,1,2',
             transportLines: 'Seoul,Busan,2027-04-01,Bus,10,10',
             lodgingLines: '',
-            startDate: '2027-04-01', days: 5, costPerMinute: 0, k: 1
+            startDate: '2027-04-01', days: 5, costPerHour: 0, k: 1
         });
-        assert.fail('Should throw');
-    } catch(err) {
-        assert.strictEqual(err.inputId, 'transportLines');
-        assert.strictEqual(err.lineNum, 1);
-        assert.match(err.message, /Unknown city 'Busan'/);
+    } catch (e) {
+        err = e;
     }
+    if (!err) assert.fail('Should throw');
+    assert.strictEqual(err.inputId, 'transportLines');
+    assert.strictEqual(err.lineNum, 1);
+    assert.match(err.message, /Unknown city 'Busan'/);
 
     // Unknown city on lodging
+    err = null;
     try {
         parseData({
             startCity: 'Seoul', endCity: 'Seoul',
             visitLines: 'Tokyo,1,2',
             transportLines: 'Seoul,Tokyo,2027-04-01,Flight,10,10',
             lodgingLines: 'Kyoto,2027-04-01,5000',
-            startDate: '2027-04-01', days: 5, costPerMinute: 0, k: 1
+            startDate: '2027-04-01', days: 5, costPerHour: 0, k: 1
         });
-        assert.fail('Should throw');
-    } catch(err) {
-        assert.strictEqual(err.inputId, 'lodgingLines');
-        assert.strictEqual(err.lineNum, 1);
-        assert.match(err.message, /Unknown city 'Kyoto'/);
+    } catch (e) {
+        err = e;
     }
+    if (!err) assert.fail('Should throw');
+    assert.strictEqual(err.inputId, 'lodgingLines');
+    assert.strictEqual(err.lineNum, 1);
+    assert.match(err.message, /Unknown city 'Kyoto'/);
 });
 
 test('parseData: Out-of-window dates skipped and counted', () => {
@@ -42,7 +46,7 @@ test('parseData: Out-of-window dates skipped and counted', () => {
         visitLines: 'B,1,1',
         transportLines: 'A,B,2027-04-01,T,10,10\nA,B,2027-04-10,T,10,10', // 2027-04-10 is day 9, out of window if days=5
         lodgingLines: 'B,2027-04-10,100',
-        startDate: '2027-04-01', days: 5, costPerMinute: 0, k: 1
+        startDate: '2027-04-01', days: 5, costPerHour: 0, k: 1
     });
     assert.strictEqual(res.skippedLines, 2);
 });
@@ -53,7 +57,7 @@ test('parseData: Array index layout and round trip output decoding', () => {
         visitLines: 'B,1,2',
         transportLines: 'A,B,2027-04-01,Flight,100,50\nB,C,2027-04-02,Train,200,60\nB,C,2027-04-02,Bus,50,120',
         lodgingLines: 'B,2027-04-01,1000\nB,2027-04-02,1200',
-        startDate: '2027-04-01', days: 3, costPerMinute: 10, k: 1
+        startDate: '2027-04-01', days: 3, costPerHour: 10, k: 1
     });
     
     assert.strictEqual(res.V, 1);
@@ -105,9 +109,35 @@ test('F6 Share link: encode then decode gives the same input', () => {
         visitLines: 'Osaka,1,2',
         transportLines: 'Seoul,Osaka,2027-04-01,Flight,10,10',
         lodgingLines: 'Osaka,2027-04-01,5000',
-        startDate: '2027-04-01', days: 5, costPerMinute: 200, k: 5
+        startDate: '2027-04-01', days: 5, costPerHour: 200, k: 5
     };
     const hash = encodeState(input);
     const decoded = decodeState(hash);
     assert.deepStrictEqual(decoded, input);
+});
+
+test('F6 Share link: legacy costPerMinute link decodes to costPerHour', () => {
+    const legacyInput = {
+        startCity: 'Seoul', endCity: 'Tokyo',
+        visitLines: 'Osaka,1,2',
+        transportLines: 'Seoul,Osaka,2027-04-01,Flight,10,10',
+        lodgingLines: 'Osaka,2027-04-01,5000',
+        startDate: '2027-04-01', days: 5, costPerMinute: 200, k: 5
+    };
+    const hash = encodeState(legacyInput);
+    const decoded = decodeState(hash);
+    assert.strictEqual(decoded.costPerHour, 12000); // 200 * 60
+    assert.strictEqual(decoded.costPerMinute, 200); // the property might still exist, or we check costPerHour
+});
+
+test('F3 Value mode: hour-to-minute rounding', () => {
+    const res = parseData({
+        startCity: 'Seoul', endCity: 'Tokyo',
+        visitLines: 'Osaka,1,2',
+        transportLines: 'Seoul,Osaka,2027-04-01,Flight,10,10',
+        lodgingLines: 'Osaka,2027-04-01,5000',
+        startDate: '2027-04-01', days: 5, costPerHour: 10000, k: 5
+    });
+    // 10000 / 60 = 166.666... -> 167
+    assert.strictEqual(res.costPerMinute, 167);
 });

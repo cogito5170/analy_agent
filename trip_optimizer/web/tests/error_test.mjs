@@ -39,6 +39,16 @@ import { chromium } from 'playwright';
     await page.route('**/engine.wasm', route => route.abort('failed'));
     await page.route('**/engine.mjs', route => route.abort('failed'));
     await page.goto(siteUrl);
+    
+    // Assert error visible without pressing optimize
+    await page.waitForSelector('.error', { timeout: 10000 });
+    const statusText2Pre = await page.innerText('#status');
+    console.log("Load failure message shown without Optimize:", statusText2Pre);
+    if (!statusText2Pre.includes('Error') && !statusText2Pre.includes('failed')) {
+        console.error("Test 2 Failed: module load error message not found in status without optimize");
+        process.exit(1);
+    }
+    
     await page.click('#btnExample');
     await page.click('#btnOptimize');
     await page.waitForSelector('.error', { timeout: 10000 });

@@ -7,8 +7,10 @@ export function parseData({
     startDate, // YYYY-MM-DD
     days,
     k,
-    costPerMinute
+    costPerHour
 }) {
+    const costPerMinute = Math.round((costPerHour || 0) / 60);
+
     // 1. Visit Cities (방문 도시)
     // Format: city,min_stay,max_stay
     function throwError(inputId, lineNum, msg) {
@@ -340,7 +342,13 @@ export function encodeState(state) {
 export function decodeState(hash) {
     if (!hash || hash.length < 2) return null;
     try {
-        return JSON.parse(decodeURIComponent(atob(hash.startsWith('#') ? hash.substring(1) : hash)));
+        const obj = JSON.parse(decodeURIComponent(atob(hash.startsWith('#') ? hash.substring(1) : hash)));
+        if (obj && typeof obj === 'object') {
+            if (obj.costPerHour === undefined && obj.costPerMinute !== undefined) {
+                obj.costPerHour = obj.costPerMinute * 60;
+            }
+        }
+        return obj;
     } catch(e) {
         return null;
     }

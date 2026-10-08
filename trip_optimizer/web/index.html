@@ -24,7 +24,7 @@
     <div>
         <label>Start Date (YYYY-MM-DD): <input type="date" id="startDate" value="2027-04-01"></label>
         <label>Planning Days: <input type="number" id="days" value="14" min="1"></label>
-        <label>Cost per minute (won): <input type="number" id="costPerMinute" value="200" min="0"></label>
+        <label>1시간의 가치(원): <input type="number" id="costPerHour" value="12000" min="0"> <span id="cpmDisplay"></span></label>
     </div>
 
     <button id="btnExample">Load Example Dataset</button>
@@ -81,13 +81,23 @@ Fukuoka,1,2</textarea>
         let pendingReject = null;
         let workerDead = false;
 
+        function showError(msg) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = msg;
+            statusDiv.className = 'error';
+        }
+
         worker.onmessage = (e) => {
             const data = e.data;
             if (data.type === 'ready') {
                 console.log("Worker ready");
                 checkHashAndRun();
             } else if (data.type === 'error') {
-                if (pendingReject) pendingReject(new Error(data.error));
+                if (pendingReject) {
+                    pendingReject(new Error(data.error));
+                } else {
+                    showError(data.error);
+                }
             } else if (data.type === 'success') {
                 if (pendingResolve) pendingResolve(data);
             }
@@ -95,14 +105,23 @@ Fukuoka,1,2</textarea>
         worker.onerror = (e) => {
             console.error("Worker error:", e);
             workerDead = true;
-            if (pendingReject) pendingReject(new Error(e.message || "Worker failed to load"));
-            else {
-                document.getElementById('status').textContent = "Worker failed to load: " + (e.message || "Unknown error");
-                document.getElementById('status').className = 'error';
+            const msg = e.message || "Worker failed to load";
+            if (pendingReject) {
+                pendingReject(new Error(msg));
+            } else {
+                showError(msg);
             }
         };
 
         worker.postMessage({ type: 'init' });
+
+        function updateCpmDisplay() {
+            const val = parseInt(document.getElementById('costPerHour').value, 10);
+            const cpm = Math.round((isNaN(val) ? 0 : val) / 60);
+            document.getElementById('cpmDisplay').textContent = `(${cpm}원/분)`;
+        }
+        document.getElementById('costPerHour').addEventListener('input', updateCpmDisplay);
+        updateCpmDisplay();
 
         function getInputState() {
             return {
@@ -113,7 +132,7 @@ Fukuoka,1,2</textarea>
                 lodgingLines: document.getElementById('lodgingLines').value,
                 startDate: document.getElementById('startDate').value,
                 days: parseInt(document.getElementById('days').value, 10),
-                costPerMinute: parseInt(document.getElementById('costPerMinute').value, 10),
+                costPerHour: parseInt(document.getElementById('costPerHour').value, 10) || 0,
                 k: 5
             };
         }
@@ -123,7 +142,8 @@ Fukuoka,1,2</textarea>
             document.getElementById('endCity').value = data.endCity;
             document.getElementById('startDate').value = data.startDate;
             document.getElementById('days').value = data.days;
-            document.getElementById('costPerMinute').value = data.costPerMinute;
+            document.getElementById('costPerHour').value = data.costPerHour;
+            updateCpmDisplay();
             document.getElementById('visitLines').value = data.visitLines;
             document.getElementById('transportLines').value = data.transportLines;
             document.getElementById('lodgingLines').value = data.lodgingLines;
@@ -157,8 +177,8 @@ Fukuoka,1,2</textarea>
             
             statusDiv.textContent = 'Parsing data...';
             statusDiv.className = '';
-            resultsDiv.innerHTML = '';
-            noticesDiv.innerHTML = '';
+            resultsDiv.textContent = '';
+            noticesDiv.textContent = '';
             
             const rawInput = getInputState();
             let parsed;
@@ -203,7 +223,7 @@ Fukuoka,1,2</textarea>
                     return;
                 }
                 
-                const cpm = rawInput.costPerMinute;
+                const cpm = Math.round((rawInput.costPerHour || 0) / 60);
                 
                 res.plans.forEach((plan, i) => {
                     const div = document.createElement('div');

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { parseData, decodePlans } from '../model.mjs';
+import { parseData, decodePlans, encodeState, decodeState } from '../model.mjs';
 
 test('parseData: CSV parsing and error line numbers', () => {
     // Unknown city on transport
-    assert.throws(() => {
+    try {
         parseData({
             startCity: 'Seoul', endCity: 'Seoul',
             visitLines: 'Tokyo,1,2',
@@ -12,10 +12,15 @@ test('parseData: CSV parsing and error line numbers', () => {
             lodgingLines: '',
             startDate: '2027-04-01', days: 5, costPerMinute: 0, k: 1
         });
-    }, /Unknown city 'Busan' on transport line 1/);
+        assert.fail('Should throw');
+    } catch(err) {
+        assert.strictEqual(err.inputId, 'transportLines');
+        assert.strictEqual(err.lineNum, 1);
+        assert.match(err.message, /Unknown city 'Busan'/);
+    }
 
     // Unknown city on lodging
-    assert.throws(() => {
+    try {
         parseData({
             startCity: 'Seoul', endCity: 'Seoul',
             visitLines: 'Tokyo,1,2',
@@ -23,7 +28,12 @@ test('parseData: CSV parsing and error line numbers', () => {
             lodgingLines: 'Kyoto,2027-04-01,5000',
             startDate: '2027-04-01', days: 5, costPerMinute: 0, k: 1
         });
-    }, /Unknown city 'Kyoto' on lodging line 1/);
+        assert.fail('Should throw');
+    } catch(err) {
+        assert.strictEqual(err.inputId, 'lodgingLines');
+        assert.strictEqual(err.lineNum, 1);
+        assert.match(err.message, /Unknown city 'Kyoto'/);
+    }
 });
 
 test('parseData: Out-of-window dates skipped and counted', () => {
@@ -88,3 +98,16 @@ test('parseData: Array index layout and round trip output decoding', () => {
     assert.strictEqual(plans[0].stays[0].city, 'B');
 });
 
+
+test('F6 Share link: encode then decode gives the same input', () => {
+    const input = {
+        startCity: 'Seoul', endCity: 'Tokyo',
+        visitLines: 'Osaka,1,2',
+        transportLines: 'Seoul,Osaka,2027-04-01,Flight,10,10',
+        lodgingLines: 'Osaka,2027-04-01,5000',
+        startDate: '2027-04-01', days: 5, costPerMinute: 200, k: 5
+    };
+    const hash = encodeState(input);
+    const decoded = decodeState(hash);
+    assert.deepStrictEqual(decoded, input);
+});

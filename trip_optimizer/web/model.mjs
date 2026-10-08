@@ -11,6 +11,12 @@ export function parseData({
 }) {
     // 1. Visit Cities (방문 도시)
     // Format: city,min_stay,max_stay
+    function throwError(inputId, lineNum, msg) {
+        const e = new Error(msg);
+        e.inputId = inputId;
+        e.lineNum = lineNum;
+        throw e;
+    }
     const visits = [];
     const cities = new Map();
     cities.set(startCity, 0); // 0 = start
@@ -20,16 +26,16 @@ export function parseData({
     
     const visitItems = splitLines(visitLines);
     if (visitItems.length > 10) {
-        throw new Error("Too many visit cities (max 10).");
+        throwError('visitLines', null, 'Too many visit cities (max 10).');
     }
     
     for (const item of visitItems) {
         const parts = item.text.split(',');
-        if (parts.length < 3) throw new Error(`Visit city format error on line ${item.lineNum}`);
+        if (parts.length < 3) throwError('visitLines', item.lineNum, `Visit city format error`);
         const name = parts[0].trim();
         const min = parseInt(parts[1], 10);
         const max = parseInt(parts[2], 10);
-        if (cities.has(name)) throw new Error(`Duplicate city ${name} on line ${item.lineNum}`);
+        if (cities.has(name)) throwError('visitLines', item.lineNum, `Duplicate city ${name}`);
         visits.push({ name, min, max });
         cities.set(name, visits.length); // 1..V
     }
@@ -60,7 +66,7 @@ export function parseData({
     for (const item of transItems) {
         // 출발도시,도착도시,날짜(YYYY-MM-DD),수단,가격(원),소요분
         const parts = item.text.split(',');
-        if (parts.length < 6) throw new Error(`Transport format error on line ${item.lineNum}`);
+        if (parts.length < 6) throwError('transportLines', item.lineNum, `Transport format error`);
         const [from, to, dateStr, mode, priceStr, minsStr] = parts.map(p => p.trim());
         
         let fromIdx = -1, toIdx = -1;
@@ -71,8 +77,8 @@ export function parseData({
         if (to === endCity) toIdx = V + 1;
         else if (cities.has(to) && to !== startCity) toIdx = cities.get(to); // to cannot be start city node 0
         
-        if (fromIdx === -1 && from !== startCity && !cities.has(from)) throw new Error(`Unknown city '${from}' on transport line ${item.lineNum}`);
-        if (toIdx === -1 && to !== endCity && !cities.has(to)) throw new Error(`Unknown city '${to}' on transport line ${item.lineNum}`);
+        if (fromIdx === -1 && from !== startCity && !cities.has(from)) throwError('transportLines', item.lineNum, `Unknown city '${from}'`);
+        if (toIdx === -1 && to !== endCity && !cities.has(to)) throwError('transportLines', item.lineNum, `Unknown city '${to}'`);
         
         const dayIdx = getDayIndex(dateStr);
         if (dayIdx < 0 || dayIdx >= days) {
@@ -117,7 +123,7 @@ export function parseData({
     for (const item of lodgingItems) {
         // 도시,날짜,1박가격(원)
         const parts = item.text.split(',');
-        if (parts.length < 3) throw new Error(`Lodging format error on line ${item.lineNum}`);
+        if (parts.length < 3) throwError('lodgingLines', item.lineNum, `Lodging format error`);
         const [city, dateStr, priceStr] = parts.map(p => p.trim());
         
         let cIdx = -1;
@@ -125,7 +131,7 @@ export function parseData({
         else if (city === endCity) cIdx = V + 1;
         else if (cities.has(city)) cIdx = cities.get(city);
         
-        if (cIdx === -1) throw new Error(`Unknown city '${city}' on lodging line ${item.lineNum}`);
+        if (cIdx === -1) throwError('lodgingLines', item.lineNum, `Unknown city '${city}'`);
         
         const dayIdx = getDayIndex(dateStr);
         if (dayIdx < 0 || dayIdx >= days) {
@@ -325,5 +331,17 @@ export function callEngine(mod, parsed) {
         if (ptrStayMin) mod._free(ptrStayMin);
         if (ptrStayMax) mod._free(ptrStayMax);
         if (ptrOut) mod._free(ptrOut);
+    }
+}
+
+export function encodeState(state) {
+    return btoa(encodeURIComponent(JSON.stringify(state)));
+}
+export function decodeState(hash) {
+    if (!hash || hash.length < 2) return null;
+    try {
+        return JSON.parse(decodeURIComponent(atob(hash.startsWith('#') ? hash.substring(1) : hash)));
+    } catch(e) {
+        return null;
     }
 }

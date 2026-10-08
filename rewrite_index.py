@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -224,12 +224,9 @@ Fukuoka,1,2</textarea>
 
                     // Timeline
                     const timelineUl = el('ul', null);
-                    const timelineEvents = [];
-                    plan.legs.forEach(l => timelineEvents.push({ date: l.date, text: `${l.from} -> ${l.to} (${l.mode}, ${l.minutes} min)` }));
-                    plan.stays.forEach(s => timelineEvents.push({ date: s.arriveDate, text: `Stay in ${s.city} (${s.nights} nights)` }));
-                    timelineEvents.sort((a, b) => a.date.localeCompare(b.date));
-                    timelineEvents.forEach(e => {
-                        timelineUl.appendChild(el('li', `${e.date}: ${e.text}`));
+                    // Just listing legs is enough for timeline
+                    plan.legs.forEach(l => {
+                        timelineUl.appendChild(el('li', `${l.date}: ${l.from} -> ${l.to} (${l.mode}, ${l.minutes} min)`));
                     });
                     div.appendChild(el('h5', 'Timeline'));
                     div.appendChild(timelineUl);
@@ -255,3 +252,6 @@ Fukuoka,1,2</textarea>
     </script>
 </body>
 </html>
+"""
+with open('trip_optimizer/web/index.html', 'w') as f:
+    f.write(html)

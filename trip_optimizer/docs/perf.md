@@ -8,4 +8,4 @@ Measured on GitHub runner, 2026-10-08:
 - Native Budget: 5 ms
 - Web Budget: 20 ms
 - Lighthouse Performance: 100
-- Lighthouse Accessibility: 59
+- Lighthouse Accessibility: 87

@@ -25,37 +25,86 @@ static bool debounce(uint8_t *count, bool bad)
     return *count >= BMS_FAULT_DEBOUNCE_SAMPLES;
 }
 
+
+static uint8_t crc8_j1850(const uint8_t *data, size_t len) {
+    uint8_t crc = 0xFF;
+    for (size_t i = 0; i < len; i++) {
+        crc ^= data[i];
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x80) {
+                crc = (uint8_t)((crc << 1) ^ 0x1D);
+            } else {
+                crc = (uint8_t)(crc << 1);
+            }
+        }
+    }
+    return crc ^ 0xFF;
+}
+
+void bms_can_rx(bms_t *bms, bms_inputs_t *in, const bms_can_frame_t *frame) {
+    if (frame->id == 512 && frame->dlc == 3) {
+        uint8_t crc = crc8_j1850(frame->data, 2);
+        if (crc != frame->data[2]) {
+            bms->vcu_cmd_reject_count++;
+            if (bms->vcu_cmd_reject_count >= 3) {
+                bms->faults |= BMS_FAULT_COMM;
+            }
+            return;
+        }
+        
+        uint8_t counter = frame->data[1] & 0x0F;
+        if (!bms->vcu_cmd_first) {
+            uint8_t expected = (uint8_t)((bms->vcu_cmd_counter + 1) & 0x0F);
+            if (counter != expected) {
+                bms->vcu_cmd_reject_count++;
+                if (bms->vcu_cmd_reject_count >= 3) {
+                    bms->faults |= BMS_FAULT_COMM;
+                }
+                return;
+            }
+        }
+        
+        bms->vcu_cmd_first = false;
+        bms->vcu_cmd_counter = counter;
+        bms->vcu_cmd_reject_count = 0;
+        bms->vcu_cmd_timer = 0;
+        in->contactor_req = (frame->data[0] & 0x01) != 0;
+    }
+}
+
 void bms_init(bms_t *bms)
 {
     (void)memset(bms, 0, sizeof(*bms));
     bms->state = BMS_STATE_INIT;
-    bms->first_step = true;
+    bms->vcu_cmd_first = true;
+    bms->vcu_cmd_timer = 0;
+    bms->status_timer = 100;
+    bms->cellv_timer = 100;
+    bms->temp_timer = 100;
+    bms->fault_timer = 100;
 }
 
 void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
 {
+    uint8_t prev_faults = bms->faults;
+    out->can_tx_count = 0;
+    
+    bms->vcu_cmd_timer = (uint16_t)(bms->vcu_cmd_timer + BMS_TASK_PERIOD_MS);
+    if (bms->vcu_cmd_timer >= 300) {
+        bms->faults |= BMS_FAULT_COMM;
+    }
+
     bool cells_ok = true;
     bool temps_ok = true;
 
     for (int i = 0; i < BMS_NUM_CELLS; i++) {
         bool ok = cell_signal_ok(in->cell_mv[i]);
         cells_ok = cells_ok && ok;   /* SWR-002 */
-        if (bms->first_step) {
-            bms->cell_mv_avg[i] = in->cell_mv[i];
-        } else if (ok) {
-            bms->cell_mv_avg[i] = (uint16_t)((bms->cell_mv_avg[i] + in->cell_mv[i]) / 2);
-        }
     }
     for (int i = 0; i < BMS_NUM_TEMPS; i++) {
         bool ok = temp_signal_ok(in->temp_ddegc[i]);
         temps_ok = temps_ok && ok; /* SWR-003 */
-        if (bms->first_step) {
-            bms->temp_ddegc_avg[i] = in->temp_ddegc[i];
-        } else if (ok) {
-            bms->temp_ddegc_avg[i] = (int16_t)((bms->temp_ddegc_avg[i] + in->temp_ddegc[i]) / 2);
-        }
     }
-    bms->first_step = false;
 
     if (debounce(&bms->sig_cell_count, !cells_ok)) {
         bms->faults |= BMS_FAULT_SIG_CELL;
@@ -127,6 +176,88 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
 
     out->state = bms->state;
     out->faults = bms->faults;
-    /* SWR-011: FAULT ignores ContactorReq */
-    out->contactor_close = (bms->state == BMS_STATE_CLOSED);
+
+    if (bms->state == BMS_STATE_CLOSED) {
+        bms->contactor_closed = true;
+        bms->low_current_count = 0;
+    } else if (bms->state == BMS_STATE_FAULT) {
+        if (bms->faults == BMS_FAULT_COMM && bms->contactor_closed) {
+            if (in->current_ma <= 5000 && in->current_ma >= -5000) {
+                bms->low_current_count++;
+                if (bms->low_current_count >= 3) {
+                    bms->contactor_closed = false;
+                }
+            } else {
+                bms->low_current_count = 0;
+            }
+        } else {
+            bms->contactor_closed = false;
+        }
+    } else {
+        bms->contactor_closed = false;
+    }
+
+    out->contactor_close = bms->contactor_closed;
+
+    bms->status_timer = (uint16_t)(bms->status_timer + BMS_TASK_PERIOD_MS);
+    if (bms->status_timer >= 100) {
+        bms->status_timer = 0;
+        bms_can_frame_t *f = &out->can_tx[out->can_tx_count++];
+        f->id = 256;
+        f->dlc = 8;
+        (void)memset(f->data, 0, 8);
+        f->data[0] = (uint8_t)(bms->state & 0x0F) | (out->contactor_close ? 0x10 : 0x00) | ((bms->faults & BMS_FAULT_COMM) ? 0x20 : 0x00) | ((bms->faults != 0) ? 0x40 : 0x00);
+        uint16_t pack_v = 0; // PackVoltage
+        for (int i=0; i<BMS_NUM_CELLS; i++) pack_v = (uint16_t)(pack_v + in->cell_mv[i]);
+        f->data[1] = (uint8_t)(pack_v & 0xFF);
+        f->data[2] = (uint8_t)(pack_v >> 8);
+        
+        // PackCurrent offset 0, scale 0.1, -3276.8 to 3276.7
+        int32_t current_da = in->current_ma / 100;
+        f->data[3] = (uint8_t)(current_da & 0xFF);
+        f->data[4] = (uint8_t)((current_da >> 8) & 0xFF);
+        
+        f->data[5] = 100; // SOC = 50%
+        f->data[6] = bms->status_msg_counter++ & 0x0F;
+    }
+    
+    bms->cellv_timer = (uint16_t)(bms->cellv_timer + BMS_TASK_PERIOD_MS);
+    if (bms->cellv_timer >= 100) {
+        bms->cellv_timer = 0;
+        bms_can_frame_t *f = &out->can_tx[out->can_tx_count++];
+        f->id = 257;
+        f->dlc = 8;
+        for (int i=0; i<4; i++) {
+            f->data[i*2] = (uint8_t)(in->cell_mv[i] & 0xFF);
+            f->data[i*2+1] = (uint8_t)(in->cell_mv[i] >> 8);
+        }
+    }
+    
+    bms->temp_timer = (uint16_t)(bms->temp_timer + BMS_TASK_PERIOD_MS);
+    if (bms->temp_timer >= 100) {
+        bms->temp_timer = 0;
+        bms_can_frame_t *f = &out->can_tx[out->can_tx_count++];
+        f->id = 258;
+        f->dlc = 4;
+        for (int i=0; i<2; i++) {
+            f->data[i*2] = (uint8_t)(in->temp_ddegc[i] & 0xFF);
+            f->data[i*2+1] = (uint8_t)(in->temp_ddegc[i] >> 8);
+        }
+    }
+    
+    if (bms->faults != 0) {
+        if (prev_faults == 0) {
+            bms->fault_timer = 100; // Force immediate tx SWR-019
+        }
+        bms->fault_timer = (uint16_t)(bms->fault_timer + BMS_TASK_PERIOD_MS);
+        if (bms->fault_timer >= 100) {
+            bms->fault_timer = 0;
+            bms_can_frame_t *f = &out->can_tx[out->can_tx_count++];
+            f->id = 272;
+            f->dlc = 2;
+            f->data[0] = bms->faults;
+            f->data[1] = bms->fault_msg_counter++ & 0x0F;
+        }
+    }
+
 }

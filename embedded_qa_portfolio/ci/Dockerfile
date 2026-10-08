@@ -8,7 +8,7 @@ FROM ubuntu:24.04
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      bc ca-certificates cmake gcc git libc6-dev make python3 python3-yaml \
+      bc ca-certificates cmake gcc git libc6-dev make python3 python3-yaml cppcheck \
       binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi \
  && rm -rf /var/lib/apt/lists/*
 

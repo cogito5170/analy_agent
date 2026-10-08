@@ -32,6 +32,13 @@ skip_step() {
   echo "[skipped] $1: $2"
 }
 
+
+run_cppcheck() {
+  cppcheck --enable=all --suppress=unusedFunction --suppress=missingIncludeSystem --error-exitcode=1 -I "$FW/include" "$FW/src" > "$OUT/cppcheck.txt" 2>&1
+  # The requirement is cppcheck error 0. error-exitcode=1 makes it fail if errors exist.
+  # We should also capture the error count if needed, or just let it pass/fail.
+}
+
 host_build() {
   cmake -S "$FW" -B "$OUT/host" -DBMS_COVERAGE=ON && cmake --build "$OUT/host"
 }
@@ -44,6 +51,10 @@ coverage() {
   # CMake names coverage files after the full source name (bms.c.gcda), so pass that to gcov.
   (cd "$OUT/host" && gcov -b -o CMakeFiles/bms.dir/src bms.c.gcda) > "$OUT/gcov.txt" \
     && grep -q "Lines executed" "$OUT/gcov.txt"
+  local cov
+  cov=$(grep "Lines executed" "$OUT/gcov.txt" | grep -oP '\d+(\.\d+)?' | head -1)
+  echo "Coverage gate: $cov % >= 80 %"
+  awk -v cov="$cov" 'BEGIN { if (cov < 80.0) { print "Coverage too low"; exit 1 } }'
 }
 
 arm_build() {
@@ -66,6 +77,7 @@ reproducible() {
   [ "$(sha256sum < "$a/build/libbms.a")" = "$(sha256sum < "$b/build/libbms.a")" ]
 }
 
+run_step cppcheck run_cppcheck
 run_step host_build host_build
 run_step unit_test unit_test
 run_step coverage coverage

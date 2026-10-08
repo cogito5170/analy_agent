@@ -14,6 +14,13 @@
 
 #include "bms_config.h"
 
+
+typedef struct {
+    uint32_t id;
+    uint8_t dlc;
+    uint8_t data[8];
+} bms_can_frame_t;
+
 typedef enum {
     BMS_STATE_INIT = 0,
     BMS_STATE_STANDBY = 1,
@@ -44,6 +51,8 @@ typedef struct {
     bool contactor_close;
     bms_state_t state;
     uint8_t faults; /* BMS_FAULT_* bits */
+    bms_can_frame_t can_tx[4];
+    uint8_t can_tx_count;
 } bms_outputs_t;
 
 typedef struct {
@@ -51,17 +60,27 @@ typedef struct {
     uint8_t faults;
     uint8_t sig_cell_count;
     uint8_t sig_temp_count;
-    uint16_t cell_mv_avg[BMS_NUM_CELLS];
-    int16_t temp_ddegc_avg[BMS_NUM_TEMPS];
-    bool first_step;
     uint8_t ov_count;
     uint8_t uv_count;
     uint8_t ot_count;
     uint8_t utc_count;
     uint8_t oc_count;
+    uint16_t vcu_cmd_timer;
+    uint8_t vcu_cmd_reject_count;
+    uint8_t vcu_cmd_counter;
+    bool vcu_cmd_first;
+    uint16_t status_timer;
+    uint16_t cellv_timer;
+    uint16_t temp_timer;
+    uint16_t fault_timer;
+    uint8_t status_msg_counter;
+    uint8_t fault_msg_counter;
+    uint8_t low_current_count;
+    bool contactor_closed;
 } bms_t;
 
 void bms_init(bms_t *bms);
+void bms_can_rx(bms_t *bms, bms_inputs_t *in, const bms_can_frame_t *frame);
 void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out);
 
 #endif /* BMS_H */

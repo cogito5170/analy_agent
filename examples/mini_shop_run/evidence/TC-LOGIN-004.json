@@ -1,0 +1,91 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-004",
+    "req_id": "REQ-001",
+    "title": "로그인 잘못된 비밀번호",
+    "technique": "negative",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": "password",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "alice@example.com",
+          "password": "Wrong#Pass99"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 401,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 401",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-004",
+    "req_id": "REQ-001",
+    "status": "failed",
+    "expected": "no_5xx = status < 500",
+    "actual": "no_5xx = 500 at step 1",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "alice@example.com",
+            "password": "Wrong#Pass99"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 500,
+          "body": {
+            "error": "Internal Server Error",
+            "trace": "KeyError: 'last_login'"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.1,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 500,
+            "passed": false
+          },
+          {
+            "type": "status",
+            "expected": 401,
+            "actual": 500,
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-004.json"
+    ],
+    "duration_ms": 2.4,
+    "attempt": 1,
+    "note": null
+  }
+}

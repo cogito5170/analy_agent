@@ -1,0 +1,353 @@
+{
+  "$defs": {
+    "Expectation": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        },
+        "status_in": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status In"
+        },
+        "status_not_in": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status Not In"
+        },
+        "body_contains": {
+          "additionalProperties": true,
+          "title": "Body Contains",
+          "type": "object"
+        },
+        "body_has_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Body Has Keys",
+          "type": "array"
+        },
+        "max_elapsed_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Elapsed Ms"
+        },
+        "same_as_previous": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Same As Previous"
+        },
+        "allow_5xx": {
+          "default": false,
+          "title": "Allow 5Xx",
+          "type": "boolean"
+        }
+      },
+      "title": "Expectation",
+      "type": "object"
+    },
+    "Skipped": {
+      "additionalProperties": false,
+      "properties": {
+        "req_id": {
+          "title": "Req Id",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "req_id",
+        "reason"
+      ],
+      "title": "Skipped",
+      "type": "object"
+    },
+    "Step": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body"
+        },
+        "query": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Headers",
+          "type": "object"
+        },
+        "auth": {
+          "default": false,
+          "title": "Auth",
+          "type": "boolean"
+        },
+        "repeat": {
+          "default": 1,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "expect": {
+          "$ref": "#/$defs/Expectation"
+        }
+      },
+      "required": [
+        "method",
+        "path",
+        "expect"
+      ],
+      "title": "Step",
+      "type": "object"
+    },
+    "TestCase": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "req_id": {
+          "title": "Req Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "technique": {
+          "enum": [
+            "happy_path",
+            "equivalence_partitioning",
+            "boundary_value",
+            "decision_table",
+            "state_transition",
+            "negative",
+            "security_negative",
+            "performance",
+            "exploratory"
+          ],
+          "title": "Technique",
+          "type": "string"
+        },
+        "also_covers": {
+          "items": {
+            "enum": [
+              "happy_path",
+              "equivalence_partitioning",
+              "boundary_value",
+              "decision_table",
+              "state_transition",
+              "negative",
+              "security_negative",
+              "performance",
+              "exploratory"
+            ],
+            "type": "string"
+          },
+          "title": "Also Covers",
+          "type": "array"
+        },
+        "priority": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "focus": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Focus"
+        },
+        "automated": {
+          "title": "Automated",
+          "type": "boolean"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "charter": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Charter"
+        },
+        "oracle": {
+          "title": "Oracle",
+          "type": "string"
+        },
+        "assumption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assumption"
+        }
+      },
+      "required": [
+        "id",
+        "req_id",
+        "title",
+        "technique",
+        "priority",
+        "automated",
+        "oracle"
+      ],
+      "title": "TestCase",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_test_plan/1",
+      "default": "qa_test_plan/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "strategy": {
+      "additionalProperties": {
+        "items": {
+          "enum": [
+            "happy_path",
+            "equivalence_partitioning",
+            "boundary_value",
+            "decision_table",
+            "state_transition",
+            "negative",
+            "security_negative",
+            "performance",
+            "exploratory"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Strategy",
+      "type": "object"
+    },
+    "test_cases": {
+      "items": {
+        "$ref": "#/$defs/TestCase"
+      },
+      "title": "Test Cases",
+      "type": "array"
+    },
+    "skipped_requirements": {
+      "items": {
+        "$ref": "#/$defs/Skipped"
+      },
+      "title": "Skipped Requirements",
+      "type": "array"
+    }
+  },
+  "required": [
+    "strategy",
+    "test_cases",
+    "skipped_requirements"
+  ],
+  "title": "TestPlan",
+  "type": "object",
+  "$id": "qa_test_plan/1"
+}

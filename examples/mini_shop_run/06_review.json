@@ -1,0 +1,80 @@
+{
+  "schema": "qa_review/1",
+  "verdict": "conditional_pass",
+  "metrics": {
+    "requirements_total": 8,
+    "requirements_testable": 7,
+    "requirements_executed": 7,
+    "requirement_coverage": 0.875,
+    "test_cases_total": 34,
+    "test_cases_automated": 33,
+    "tests_executed": 33,
+    "tests_passed": 22,
+    "tests_failed": 11,
+    "techniques": {
+      "state_transition": 2,
+      "happy_path": 4,
+      "negative": 5,
+      "equivalence_partitioning": 6,
+      "boundary_value": 10,
+      "exploratory": 1,
+      "decision_table": 4,
+      "security_negative": 4,
+      "performance": 1
+    },
+    "triage": {
+      "product_bug": 10,
+      "requirement_ambiguity": 1
+    },
+    "defects_by_severity": {
+      "critical": 1,
+      "high": 2,
+      "medium": 1
+    },
+    "defects_total": 4
+  },
+  "findings": [
+    {
+      "id": "RV-001",
+      "check": "requirement_coverage",
+      "severity": "major",
+      "target": "REQ-008",
+      "message": "회원 탈퇴: 요구사항이 테스트 불가 상태라 검증되지 않음 — 명세 보완 후 재설계 필요"
+    },
+    {
+      "id": "RV-002",
+      "check": "assumption",
+      "severity": "info",
+      "target": "TC-SEARCH-001",
+      "message": "가정에 기반한 오라클: 요구사항에 정량 기준이 없어 500ms로 가정 — 명확화 필요"
+    },
+    {
+      "id": "RV-003",
+      "check": "blocked_by_defect",
+      "severity": "major",
+      "target": "TC-LOGIN-012,TC-LOGIN-013,TC-LOGIN-014,TC-LOGIN-018,TC-LOGIN-019,TC-LOGIN-001",
+      "message": "BUG-003의 서버 오류에 가려 이 테스트들의 본래 검증(경계값·상태 전이 등)이 수행되지 않음 — BUG-003 수정 후 재실행 필요"
+    },
+    {
+      "id": "RV-004",
+      "check": "environment",
+      "severity": "minor",
+      "target": "TC-SEARCH-001",
+      "message": "일시적 환경 오류 감지: HTTP 503 on first attempt, not on rerun"
+    },
+    {
+      "id": "RV-005",
+      "check": "open_question",
+      "severity": "major",
+      "target": "TC-SEARCH-001",
+      "message": "판정 보류 (requirement_ambiguity): 첫 실행은 일시적 HTTP 503(환경) — 재실행 결과로 판정. 테스트 오라클이 가정에 기반함: 요구사항에 정량 기준이 없어 500ms로 가정 — 명확화 필요"
+    },
+    {
+      "id": "RV-006",
+      "check": "not_run",
+      "severity": "info",
+      "target": "TC-PAYMENT-010",
+      "message": "수동 탐색 차터 — 세션 결과 기록 필요"
+    }
+  ]
+}

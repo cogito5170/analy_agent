@@ -1,0 +1,207 @@
+{
+  "schema": "qa_defect/1",
+  "triage": [
+    {
+      "test_id": "TC-PAYMENT-001",
+      "classification": "product_bug",
+      "reason": "같은 요청 재시도에서 'payment_id'가 달라짐 — 중복 처리",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-001"
+    },
+    {
+      "test_id": "TC-PAYMENT-006",
+      "classification": "product_bug",
+      "reason": "검증되어야 할 입력이 HTTP 200로 통과 — 입력 검증 누락",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-002"
+    },
+    {
+      "test_id": "TC-LOGIN-001",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-004",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-010",
+      "classification": "product_bug",
+      "reason": "검증되어야 할 입력이 HTTP 401로 통과 — 입력 검증 누락",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-004"
+    },
+    {
+      "test_id": "TC-LOGIN-012",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-013",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-014",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-018",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-LOGIN-019",
+      "classification": "product_bug",
+      "reason": "서버 오류 HTTP 500 — 어떤 입력에도 5xx는 허용되지 않음",
+      "reproduced_on_rerun": true,
+      "transient_noise": null,
+      "defect_id": "BUG-003"
+    },
+    {
+      "test_id": "TC-SEARCH-001",
+      "classification": "requirement_ambiguity",
+      "reason": "첫 실행은 일시적 HTTP 503(환경) — 재실행 결과로 판정. 테스트 오라클이 가정에 기반함: 요구사항에 정량 기준이 없어 500ms로 가정 — 명확화 필요",
+      "reproduced_on_rerun": false,
+      "transient_noise": "HTTP 503 on first attempt, not on rerun",
+      "defect_id": null
+    }
+  ],
+  "defects": [
+    {
+      "id": "BUG-001",
+      "title": "결제: 같은 Idempotency-Key로 재시도 시 같은 요청이 중복 처리됨",
+      "req_id": "REQ-004",
+      "severity": "critical",
+      "priority": "P0",
+      "reproduction": [
+        "테스트 계정으로 로그인해 토큰을 발급받는다",
+        "POST /api/payments 요청 (데이터 {\"amount\": 15000}, 헤더 ['Idempotency-Key'])",
+        "POST /api/payments 요청 (데이터 {\"amount\": 15000}, 헤더 ['Idempotency-Key'])"
+      ],
+      "expected": "same_as_previous.payment_id = e1f2d33c2054",
+      "actual": "same_as_previous.payment_id = d54fed014620 at step 2",
+      "evidence": [
+        "evidence/TC-PAYMENT-001.attempt2.json",
+        "evidence/TC-PAYMENT-001.json"
+      ],
+      "related_tests": [
+        "TC-PAYMENT-001"
+      ],
+      "reproducible": true,
+      "confidence": 0.95
+    },
+    {
+      "id": "BUG-002",
+      "title": "결제: 'amount' 최솟값-1(0) 시 입력 검증 없이 HTTP 200 응답",
+      "req_id": "REQ-003",
+      "severity": "high",
+      "priority": "P1",
+      "reproduction": [
+        "테스트 계정으로 로그인해 토큰을 발급받는다",
+        "POST /api/payments 요청 (데이터 {\"amount\": 0})"
+      ],
+      "expected": "status = 400",
+      "actual": "status = 200 at step 1",
+      "evidence": [
+        "evidence/TC-PAYMENT-006.attempt2.json",
+        "evidence/TC-PAYMENT-006.json"
+      ],
+      "related_tests": [
+        "TC-PAYMENT-006"
+      ],
+      "reproducible": true,
+      "confidence": 0.91
+    },
+    {
+      "id": "BUG-003",
+      "title": "로그인: 잘못된 비밀번호 시 HTTP 500 서버 오류 발생",
+      "req_id": "REQ-001",
+      "severity": "high",
+      "priority": "P1",
+      "reproduction": [
+        "POST /api/login 요청 (데이터 {\"email\": \"alice@example.com\", \"password\": \"Wrong#Pass99\"})"
+      ],
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "evidence": [
+        "evidence/TC-LOGIN-001.attempt2.json",
+        "evidence/TC-LOGIN-001.json",
+        "evidence/TC-LOGIN-004.attempt2.json",
+        "evidence/TC-LOGIN-004.json",
+        "evidence/TC-LOGIN-012.attempt2.json",
+        "evidence/TC-LOGIN-012.json",
+        "evidence/TC-LOGIN-013.attempt2.json",
+        "evidence/TC-LOGIN-013.json",
+        "evidence/TC-LOGIN-014.attempt2.json",
+        "evidence/TC-LOGIN-014.json",
+        "evidence/TC-LOGIN-018.attempt2.json",
+        "evidence/TC-LOGIN-018.json",
+        "evidence/TC-LOGIN-019.attempt2.json",
+        "evidence/TC-LOGIN-019.json"
+      ],
+      "related_tests": [
+        "TC-LOGIN-004",
+        "TC-LOGIN-012",
+        "TC-LOGIN-013",
+        "TC-LOGIN-014",
+        "TC-LOGIN-018",
+        "TC-LOGIN-019",
+        "TC-LOGIN-001"
+      ],
+      "reproducible": true,
+      "confidence": 0.99
+    },
+    {
+      "id": "BUG-004",
+      "title": "로그인: 'email' 최대 길이+1(255자) 시 입력 검증 없이 HTTP 401 응답",
+      "req_id": "REQ-001",
+      "severity": "medium",
+      "priority": "P2",
+      "reproduction": [
+        "POST /api/login 요청 (데이터 {\"email\": \"aaaaaa…(255자)\", \"password\": \"Correct#Pass1\"})"
+      ],
+      "expected": "status = 400",
+      "actual": "status = 401 at step 1",
+      "evidence": [
+        "evidence/TC-LOGIN-010.attempt2.json",
+        "evidence/TC-LOGIN-010.json"
+      ],
+      "related_tests": [
+        "TC-LOGIN-010"
+      ],
+      "reproducible": true,
+      "confidence": 0.91
+    }
+  ],
+  "clarifications_needed": [
+    {
+      "req_id": "REQ-006",
+      "test_id": "TC-SEARCH-001",
+      "question": "요구사항에 정량 기준이 없어 500ms로 가정 — 명확화 필요 (관찰값: elapsed_ms = 601.7 at step 1)"
+    }
+  ]
+}

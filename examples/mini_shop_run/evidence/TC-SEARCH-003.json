@@ -1,0 +1,84 @@
+{
+  "test_case": {
+    "id": "TC-SEARCH-003",
+    "req_id": "REQ-005",
+    "title": "상품 검색 입력 없이 요청",
+    "technique": "negative",
+    "also_covers": [],
+    "priority": "P3",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "GET",
+        "path": "/api/products",
+        "body": null,
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 400,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 400",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-SEARCH-003",
+    "req_id": "REQ-005",
+    "status": "passed",
+    "expected": "status 400",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "GET",
+          "path": "/api/products",
+          "query": null,
+          "body": null,
+          "headers": {}
+        },
+        "response": {
+          "status": 400,
+          "body": {
+            "error": "invalid query"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.2,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 400,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 400,
+            "actual": 400,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-SEARCH-003.json"
+    ],
+    "duration_ms": 2.5,
+    "attempt": 1,
+    "note": null
+  }
+}

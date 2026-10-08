@@ -1,0 +1,105 @@
+{
+  "test_case": {
+    "id": "TC-SEARCH-001",
+    "req_id": "REQ-006",
+    "title": "상품 검색 응답 시간 500ms 이내",
+    "technique": "performance",
+    "also_covers": [],
+    "priority": "P2",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "GET",
+        "path": "/api/products",
+        "body": null,
+        "query": {
+          "q": "shoes"
+        },
+        "headers": {},
+        "auth": false,
+        "repeat": 3,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [
+            "results"
+          ],
+          "max_elapsed_ms": 500,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "3회 모두 500ms 이내",
+    "assumption": "요구사항에 정량 기준이 없어 500ms로 가정 — 명확화 필요"
+  },
+  "observation": {
+    "test_id": "TC-SEARCH-001",
+    "req_id": "REQ-006",
+    "status": "failed",
+    "expected": "elapsed_ms = <= 500",
+    "actual": "elapsed_ms = 601.7 at step 1",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "GET",
+          "path": "/api/products",
+          "query": {
+            "q": "shoes"
+          },
+          "body": null,
+          "headers": {}
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "results": [
+              "red shoes",
+              "blue shoes"
+            ]
+          }
+        },
+        "error": null,
+        "elapsed_ms": 601.7,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body_has.results",
+            "expected": "present",
+            "actual": "present",
+            "passed": true
+          },
+          {
+            "type": "elapsed_ms",
+            "expected": "<= 500",
+            "actual": 601.7,
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-SEARCH-001.attempt2.json"
+    ],
+    "duration_ms": 602.7,
+    "attempt": 2,
+    "note": null
+  }
+}

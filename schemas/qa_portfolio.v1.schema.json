@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "PortfolioSection": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "key",
+        "title",
+        "body",
+        "sources"
+      ],
+      "title": "PortfolioSection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_portfolio/1",
+      "default": "qa_portfolio/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/PortfolioSection"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "excluded_claims": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Claims",
+      "type": "array"
+    },
+    "markdown": {
+      "title": "Markdown",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "sections",
+    "excluded_claims",
+    "markdown"
+  ],
+  "title": "Portfolio",
+  "type": "object",
+  "$id": "qa_portfolio/1"
+}

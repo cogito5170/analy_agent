@@ -1,0 +1,86 @@
+{
+  "test_case": {
+    "id": "TC-PAYMENT-004",
+    "req_id": "REQ-003",
+    "title": "결제 필수 입력 'amount' 누락",
+    "technique": "equivalence_partitioning",
+    "also_covers": [],
+    "priority": "P0",
+    "focus": "amount",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/payments",
+        "body": {},
+        "query": null,
+        "headers": {},
+        "auth": true,
+        "repeat": 1,
+        "expect": {
+          "status": 400,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 400",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-PAYMENT-004",
+    "req_id": "REQ-003",
+    "status": "passed",
+    "expected": "status 400",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/payments",
+          "query": null,
+          "body": {},
+          "headers": {
+            "Authorization": "<redacted>"
+          }
+        },
+        "response": {
+          "status": 400,
+          "body": {
+            "error": "invalid amount"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.0,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 400,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 400,
+            "actual": 400,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-PAYMENT-004.json"
+    ],
+    "duration_ms": 3.1,
+    "attempt": 1,
+    "note": null
+  }
+}

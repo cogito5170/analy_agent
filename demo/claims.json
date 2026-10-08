@@ -1,0 +1,8 @@
+[
+  {"claim": "로그인 기능을 자동화 테스트했다", "evidence": ["run:04_observation.json", "qa_agents/agents/test_executor.py"]},
+  {"claim": "결제 재시도 시 중복 결제되는 결함을 발견했다", "evidence": ["run:05_defect.json"]},
+  {"claim": "리스크 기반 테스트 전략을 설계했다", "evidence": ["run:02_risk.json", "run:03_test_plan.json"]},
+  {"claim": "테스트 자동화로 QA 시간을 43% 절감했다", "evidence": ["run:04_observation.json"]},
+  {"claim": "테스트 품질을 향상시켰다", "evidence": []},
+  {"claim": "QA 프로세스를 문서화했다", "evidence": ["README.md"]}
+]

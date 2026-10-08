@@ -1,0 +1,238 @@
+{
+  "schema": "qa_evidence/1",
+  "claims": [
+    {
+      "claim": "기능 명세를 요구사항 8개로 구조화하고 모호성 4건, 누락 1건을 식별했다",
+      "origin": "pipeline",
+      "evidence": [
+        "run:01_requirement.json"
+      ],
+      "strength": "moderate",
+      "note": "설계 산출물"
+    },
+    {
+      "claim": "리스크 점수(영향도·발생가능성·탐지가능성)로 우선순위를 산정했다 (P0 2개, P1 3개)",
+      "origin": "pipeline",
+      "evidence": [
+        "run:02_risk.json"
+      ],
+      "strength": "moderate",
+      "note": "설계 산출물"
+    },
+    {
+      "claim": "테스트 기법 9종으로 테스트 케이스 34개를 설계했다",
+      "origin": "pipeline",
+      "evidence": [
+        "run:03_test_plan.json"
+      ],
+      "strength": "moderate",
+      "note": "설계 산출물"
+    },
+    {
+      "claim": "자동화 테스트 33개를 실행했다 (통과 22, 실패 11)",
+      "origin": "pipeline",
+      "evidence": [
+        "run:04_observation.json",
+        "run:evidence/TC-LOGIN-001.json",
+        "run:evidence/TC-LOGIN-002.json",
+        "run:evidence/TC-LOGIN-003.json",
+        "run:evidence/TC-LOGIN-004.json",
+        "run:evidence/TC-LOGIN-005.json",
+        "run:evidence/TC-LOGIN-006.json",
+        "run:evidence/TC-LOGIN-007.json",
+        "run:evidence/TC-LOGIN-008.json",
+        "run:evidence/TC-LOGIN-009.json",
+        "run:evidence/TC-LOGIN-010.json",
+        "run:evidence/TC-LOGIN-011.json",
+        "run:evidence/TC-LOGIN-012.json",
+        "run:evidence/TC-LOGIN-013.json",
+        "run:evidence/TC-LOGIN-014.json",
+        "run:evidence/TC-LOGIN-015.json",
+        "run:evidence/TC-LOGIN-016.json",
+        "run:evidence/TC-LOGIN-017.json",
+        "run:evidence/TC-LOGIN-018.json",
+        "run:evidence/TC-LOGIN-019.json",
+        "run:evidence/TC-PAYMENT-001.json",
+        "run:evidence/TC-PAYMENT-002.json",
+        "run:evidence/TC-PAYMENT-003.json",
+        "run:evidence/TC-PAYMENT-004.json",
+        "run:evidence/TC-PAYMENT-005.json",
+        "run:evidence/TC-PAYMENT-006.json",
+        "run:evidence/TC-PAYMENT-007.json",
+        "run:evidence/TC-PAYMENT-008.json",
+        "run:evidence/TC-PAYMENT-009.json",
+        "run:evidence/TC-PROFILE-001.json",
+        "run:evidence/TC-PROFILE-002.json",
+        "run:evidence/TC-SEARCH-001.json",
+        "run:evidence/TC-SEARCH-002.json",
+        "run:evidence/TC-SEARCH-003.json"
+      ],
+      "strength": "strong",
+      "note": "실행 로그와 요청/응답 기록"
+    },
+    {
+      "claim": "실패 11건을 재실행 후 제품 결함/테스트 결함/환경/요구사항 모호성으로 분류했다",
+      "origin": "pipeline",
+      "evidence": [
+        "run:05_defect.json"
+      ],
+      "strength": "strong",
+      "note": "재실행 결과 포함"
+    },
+    {
+      "claim": "BUG-001 (critical) 결제: 같은 Idempotency-Key로 재시도 시 같은 요청이 중복 처리됨",
+      "origin": "pipeline",
+      "evidence": [
+        "run:evidence/TC-PAYMENT-001.attempt2.json",
+        "run:evidence/TC-PAYMENT-001.json"
+      ],
+      "strength": "strong",
+      "note": "재실행에서 재현됨"
+    },
+    {
+      "claim": "BUG-002 (high) 결제: 'amount' 최솟값-1(0) 시 입력 검증 없이 HTTP 200 응답",
+      "origin": "pipeline",
+      "evidence": [
+        "run:evidence/TC-PAYMENT-006.attempt2.json",
+        "run:evidence/TC-PAYMENT-006.json"
+      ],
+      "strength": "strong",
+      "note": "재실행에서 재현됨"
+    },
+    {
+      "claim": "BUG-003 (high) 로그인: 잘못된 비밀번호 시 HTTP 500 서버 오류 발생",
+      "origin": "pipeline",
+      "evidence": [
+        "run:evidence/TC-LOGIN-001.attempt2.json",
+        "run:evidence/TC-LOGIN-001.json",
+        "run:evidence/TC-LOGIN-004.attempt2.json",
+        "run:evidence/TC-LOGIN-004.json",
+        "run:evidence/TC-LOGIN-012.attempt2.json",
+        "run:evidence/TC-LOGIN-012.json",
+        "run:evidence/TC-LOGIN-013.attempt2.json",
+        "run:evidence/TC-LOGIN-013.json",
+        "run:evidence/TC-LOGIN-014.attempt2.json",
+        "run:evidence/TC-LOGIN-014.json",
+        "run:evidence/TC-LOGIN-018.attempt2.json",
+        "run:evidence/TC-LOGIN-018.json",
+        "run:evidence/TC-LOGIN-019.attempt2.json",
+        "run:evidence/TC-LOGIN-019.json"
+      ],
+      "strength": "strong",
+      "note": "재실행에서 재현됨"
+    },
+    {
+      "claim": "BUG-004 (medium) 로그인: 'email' 최대 길이+1(255자) 시 입력 검증 없이 HTTP 401 응답",
+      "origin": "pipeline",
+      "evidence": [
+        "run:evidence/TC-LOGIN-010.attempt2.json",
+        "run:evidence/TC-LOGIN-010.json"
+      ],
+      "strength": "strong",
+      "note": "재실행에서 재현됨"
+    },
+    {
+      "claim": "QA 산출물 자체를 검토해 개선점 6건을 도출했다 (판정: conditional_pass)",
+      "origin": "pipeline",
+      "evidence": [
+        "run:06_review.json"
+      ],
+      "strength": "moderate",
+      "note": "검토 산출물"
+    },
+    {
+      "claim": "로그인 기능을 자동화 테스트했다",
+      "origin": "user",
+      "evidence": [
+        "run:04_observation.json",
+        "qa_agents/agents/test_executor.py"
+      ],
+      "strength": "strong",
+      "note": "실행 증거로 뒷받침됨"
+    },
+    {
+      "claim": "결제 재시도 시 중복 결제되는 결함을 발견했다",
+      "origin": "user",
+      "evidence": [
+        "run:05_defect.json"
+      ],
+      "strength": "strong",
+      "note": "실행 증거로 뒷받침됨"
+    },
+    {
+      "claim": "리스크 기반 테스트 전략을 설계했다",
+      "origin": "user",
+      "evidence": [
+        "run:02_risk.json",
+        "run:03_test_plan.json"
+      ],
+      "strength": "moderate",
+      "note": "산출물은 있으나 실행 결과로 입증되지 않음"
+    },
+    {
+      "claim": "테스트 자동화로 QA 시간을 43% 절감했다",
+      "origin": "user",
+      "evidence": [
+        "run:04_observation.json"
+      ],
+      "strength": "unsupported",
+      "note": "측정되지 않은 수치 ['43'] — 실제 측정값으로 바꾸거나 삭제"
+    },
+    {
+      "claim": "테스트 품질을 향상시켰다",
+      "origin": "user",
+      "evidence": [],
+      "strength": "unsupported",
+      "note": "근거 산출물이 제시되지 않음"
+    },
+    {
+      "claim": "QA 프로세스를 문서화했다",
+      "origin": "user",
+      "evidence": [
+        "README.md"
+      ],
+      "strength": "weak",
+      "note": "서술 문서만 존재"
+    }
+  ],
+  "measured_metrics": {
+    "requirements_total": 8,
+    "requirements_testable": 7,
+    "requirements_executed": 7,
+    "requirement_coverage": 0.875,
+    "test_cases_total": 34,
+    "test_cases_automated": 33,
+    "tests_executed": 33,
+    "tests_passed": 22,
+    "tests_failed": 11,
+    "techniques": {
+      "state_transition": 2,
+      "happy_path": 4,
+      "negative": 5,
+      "equivalence_partitioning": 6,
+      "boundary_value": 10,
+      "exploratory": 1,
+      "decision_table": 4,
+      "security_negative": 4,
+      "performance": 1
+    },
+    "triage": {
+      "product_bug": 10,
+      "requirement_ambiguity": 1
+    },
+    "defects_by_severity": {
+      "critical": 1,
+      "high": 2,
+      "medium": 1
+    },
+    "defects_total": 4,
+    "pass_rate_pct": 66.7,
+    "ambiguities": 4,
+    "missing_requirements": 1,
+    "risk_p0": 2,
+    "risk_p1": 3,
+    "techniques_used": 9,
+    "execution_seconds": 0.7,
+    "review_findings": 6
+  }
+}

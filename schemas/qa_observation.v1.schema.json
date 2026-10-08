@@ -1,0 +1,206 @@
+{
+  "$defs": {
+    "AssertionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected"
+        },
+        "actual": {
+          "title": "Actual"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "expected",
+        "actual",
+        "passed"
+      ],
+      "title": "AssertionResult",
+      "type": "object"
+    },
+    "Observation": {
+      "additionalProperties": false,
+      "properties": {
+        "test_id": {
+          "title": "Test Id",
+          "type": "string"
+        },
+        "req_id": {
+          "title": "Req Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "error",
+            "not_run"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected",
+          "type": "string"
+        },
+        "actual": {
+          "title": "Actual",
+          "type": "string"
+        },
+        "step_results": {
+          "items": {
+            "$ref": "#/$defs/StepResult"
+          },
+          "title": "Step Results",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "duration_ms": {
+          "default": 0.0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "attempt": {
+          "default": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "test_id",
+        "req_id",
+        "status",
+        "expected",
+        "actual"
+      ],
+      "title": "Observation",
+      "type": "object"
+    },
+    "StepResult": {
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "title": "Step",
+          "type": "integer"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        },
+        "request": {
+          "additionalProperties": true,
+          "title": "Request",
+          "type": "object"
+        },
+        "response": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Response"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "elapsed_ms": {
+          "title": "Elapsed Ms",
+          "type": "number"
+        },
+        "assertions": {
+          "items": {
+            "$ref": "#/$defs/AssertionResult"
+          },
+          "title": "Assertions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "step",
+        "iteration",
+        "request",
+        "response",
+        "elapsed_ms",
+        "assertions"
+      ],
+      "title": "StepResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_observation/1",
+      "default": "qa_observation/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "environment": {
+      "additionalProperties": true,
+      "title": "Environment",
+      "type": "object"
+    },
+    "summary": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Summary",
+      "type": "object"
+    },
+    "observations": {
+      "items": {
+        "$ref": "#/$defs/Observation"
+      },
+      "title": "Observations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "environment",
+    "summary",
+    "observations"
+  ],
+  "title": "ObservationReport",
+  "type": "object",
+  "$id": "qa_observation/1"
+}

@@ -1,0 +1,90 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-010",
+    "req_id": "REQ-001",
+    "title": "로그인 'email' 최대 길이+1(255자)",
+    "technique": "boundary_value",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": "email",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+          "password": "Correct#Pass1"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 400,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status = 400",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-010",
+    "req_id": "REQ-001",
+    "status": "failed",
+    "expected": "status = 400",
+    "actual": "status = 401 at step 1",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+            "password": "Correct#Pass1"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 401,
+          "body": {
+            "error": "invalid credentials"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.2,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 401,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 400,
+            "actual": 401,
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-010.attempt2.json"
+    ],
+    "duration_ms": 2.3,
+    "attempt": 2,
+    "note": null
+  }
+}

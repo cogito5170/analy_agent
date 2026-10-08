@@ -1,0 +1,91 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-014",
+    "req_id": "REQ-001",
+    "title": "로그인 'password' 최대 길이+1(65자)",
+    "technique": "boundary_value",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": "password",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "alice@example.com",
+          "password": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 400,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status = 400",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-014",
+    "req_id": "REQ-001",
+    "status": "failed",
+    "expected": "no_5xx = status < 500",
+    "actual": "no_5xx = 500 at step 1",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "alice@example.com",
+            "password": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 500,
+          "body": {
+            "error": "Internal Server Error",
+            "trace": "KeyError: 'last_login'"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.1,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 500,
+            "passed": false
+          },
+          {
+            "type": "status",
+            "expected": 400,
+            "actual": 500,
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-014.json"
+    ],
+    "duration_ms": 2.3,
+    "attempt": 1,
+    "note": null
+  }
+}

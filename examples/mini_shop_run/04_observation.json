@@ -1,0 +1,1842 @@
+{
+  "schema": "qa_observation/1",
+  "environment": {
+    "base_url": "http://127.0.0.1:32919",
+    "healthy": true,
+    "health_check": "GET /health -> 200",
+    "isolation": "reset before each test"
+  },
+  "summary": {
+    "passed": 22,
+    "failed": 11,
+    "error": 0,
+    "not_run": 1,
+    "total": 34
+  },
+  "observations": [
+    {
+      "test_id": "TC-PAYMENT-001",
+      "req_id": "REQ-004",
+      "status": "failed",
+      "expected": "same_as_previous.payment_id = e1f2d33c2054",
+      "actual": "same_as_previous.payment_id = d54fed014620 at step 2",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 15000
+            },
+            "headers": {
+              "Idempotency-Key": "qa-req-004-key",
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "e1f2d33c2054",
+              "amount": 15000
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.3,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.payment_id",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "step": 1,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 15000
+            },
+            "headers": {
+              "Idempotency-Key": "qa-req-004-key",
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "d54fed014620",
+              "amount": 15000
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.payment_id",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            },
+            {
+              "type": "same_as_previous.payment_id",
+              "expected": "e1f2d33c2054",
+              "actual": "d54fed014620",
+              "passed": false
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-001.json"
+      ],
+      "duration_ms": 5.7,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-002",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 200 및 성공 응답 본문",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 15000
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "70d6e5be8665",
+              "amount": 15000
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.0,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.payment_id",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-002.json"
+      ],
+      "duration_ms": 3.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-003",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 401",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 15000
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 401,
+            "body": {
+              "error": "unauthorized"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.3,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 401,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 401,
+              "actual": 401,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-003.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-004",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {},
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid amount"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.0,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-004.json"
+      ],
+      "duration_ms": 3.1,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-005",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": "abc"
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid amount"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.7,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-005.json"
+      ],
+      "duration_ms": 4.1,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-006",
+      "req_id": "REQ-003",
+      "status": "failed",
+      "expected": "status = 400",
+      "actual": "status = 200 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 0
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "be1f869b70aa",
+              "amount": 0
+            }
+          },
+          "error": null,
+          "elapsed_ms": 4.5,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 200,
+              "passed": false
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-006.json"
+      ],
+      "duration_ms": 6.7,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-007",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 200",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 1
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "fafc8e7e6433",
+              "amount": 1
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.5,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.payment_id",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-007.json"
+      ],
+      "duration_ms": 4.8,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-008",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 200",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 1000000
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "payment_id": "22ea6952450b",
+              "amount": 1000000
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.payment_id",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-008.json"
+      ],
+      "duration_ms": 3.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-009",
+      "req_id": "REQ-003",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/payments",
+            "query": null,
+            "body": {
+              "amount": 1000001
+            },
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid amount"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PAYMENT-009.json"
+      ],
+      "duration_ms": 2.9,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PAYMENT-010",
+      "req_id": "REQ-003",
+      "status": "not_run",
+      "expected": "테스터 판단 (세션 노트로 기록)",
+      "actual": "수동 탐색 세션 필요",
+      "step_results": [],
+      "evidence": [],
+      "duration_ms": 0.0,
+      "attempt": 1,
+      "note": "60분 동안 결제 기능을 대상으로 세션 만료, 동시 요청, 뒤로가기/재전송, 다국어·특수문자 입력을 탐색해 자동화 케이스가 놓친 위험을 찾는다."
+    },
+    {
+      "test_id": "TC-LOGIN-001",
+      "req_id": "REQ-002",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "locktest@example.com",
+              "password": "Wrong#Pass99"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                200
+              ],
+              "actual": 500,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-001.json"
+      ],
+      "duration_ms": 2.0,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-002",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 200 및 성공 응답 본문",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "75eea3706bcd47acbbbc77dd39f1dd43",
+              "redirect": "/dashboard"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body.redirect",
+              "expected": "/dashboard",
+              "actual": "/dashboard",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-002.json"
+      ],
+      "duration_ms": 2.5,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-003",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 401",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "nobody@example.com",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 401,
+            "body": {
+              "error": "invalid credentials"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 401,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 401,
+              "actual": 401,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-003.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-004",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "Wrong#Pass99"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status",
+              "expected": 401,
+              "actual": 500,
+              "passed": false
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-004.json"
+      ],
+      "duration_ms": 2.4,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-005",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid email"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-005.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-006",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "not-an-email",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid email"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.3,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-006.json"
+      ],
+      "duration_ms": 2.4,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-007",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid password"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.3,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-007.json"
+      ],
+      "duration_ms": 2.4,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-008",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": 12345
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid password"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-008.json"
+      ],
+      "duration_ms": 2.5,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-009",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status ≠ 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 401,
+            "body": {
+              "error": "invalid credentials"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 401,
+              "passed": true
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                400
+              ],
+              "actual": 401,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-009.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-010",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "status = 400",
+      "actual": "status = 401 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 401,
+            "body": {
+              "error": "invalid credentials"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 401,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 401,
+              "passed": false
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-010.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-011",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "status = 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "PPPPPPP"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid password"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.3,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-011.json"
+      ],
+      "duration_ms": 2.5,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-012",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "PPPPPPPP"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                400
+              ],
+              "actual": 500,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-012.json"
+      ],
+      "duration_ms": 2.1,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-013",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                400
+              ],
+              "actual": 500,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-013.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-014",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 500,
+              "passed": false
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-014.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-015",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "모든 필수 입력이 있을 때만 성공",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {},
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid email"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.4,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-015.json"
+      ],
+      "duration_ms": 2.4,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-016",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "인증 우회 없음, 5xx 없음",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "' OR '1'='1' --",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid email"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                200
+              ],
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-016.json"
+      ],
+      "duration_ms": 2.2,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-017",
+      "req_id": "REQ-001",
+      "status": "passed",
+      "expected": "인증 우회 없음, 5xx 없음",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "<script>alert(1)</script>",
+              "password": "Correct#Pass1"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid email"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                200
+              ],
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-017.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-018",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "' OR '1'='1' --"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                200
+              ],
+              "actual": 500,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-018.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-LOGIN-019",
+      "req_id": "REQ-001",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 500 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "POST",
+            "path": "/api/login",
+            "query": null,
+            "body": {
+              "email": "alice@example.com",
+              "password": "<script>alert(1)</script>"
+            },
+            "headers": {}
+          },
+          "response": {
+            "status": 500,
+            "body": {
+              "error": "Internal Server Error",
+              "trace": "KeyError: 'last_login'"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 500,
+              "passed": false
+            },
+            {
+              "type": "status_not_in",
+              "expected": [
+                200
+              ],
+              "actual": 500,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-LOGIN-019.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-SEARCH-001",
+      "req_id": "REQ-006",
+      "status": "failed",
+      "expected": "no_5xx = status < 500",
+      "actual": "no_5xx = 503 at step 1",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "GET",
+            "path": "/api/products",
+            "query": {
+              "q": "shoes"
+            },
+            "body": null,
+            "headers": {}
+          },
+          "response": {
+            "status": 503,
+            "body": {
+              "error": "warming up"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 0.9,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 503,
+              "passed": false
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 503,
+              "passed": false
+            },
+            {
+              "type": "body_has.results",
+              "expected": "present",
+              "actual": "missing",
+              "passed": false
+            },
+            {
+              "type": "elapsed_ms",
+              "expected": "<= 500",
+              "actual": 0.9,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-SEARCH-001.json"
+      ],
+      "duration_ms": 1.8,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-SEARCH-002",
+      "req_id": "REQ-005",
+      "status": "passed",
+      "expected": "status 200 및 성공 응답 본문",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "GET",
+            "path": "/api/products",
+            "query": {
+              "q": "shoes"
+            },
+            "body": null,
+            "headers": {}
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "results": [
+                "red shoes",
+                "blue shoes"
+              ]
+            }
+          },
+          "error": null,
+          "elapsed_ms": 601.4,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body_has.results",
+              "expected": "present",
+              "actual": "present",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-SEARCH-002.json"
+      ],
+      "duration_ms": 602.4,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-SEARCH-003",
+      "req_id": "REQ-005",
+      "status": "passed",
+      "expected": "status 400",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "GET",
+            "path": "/api/products",
+            "query": null,
+            "body": null,
+            "headers": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "invalid query"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.2,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 400,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 400,
+              "actual": 400,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-SEARCH-003.json"
+      ],
+      "duration_ms": 2.5,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PROFILE-001",
+      "req_id": "REQ-007",
+      "status": "passed",
+      "expected": "status 200 및 성공 응답 본문",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "GET",
+            "path": "/api/me",
+            "query": null,
+            "body": null,
+            "headers": {
+              "Authorization": "<redacted>"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "email": "alice@example.com"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.0,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 200,
+              "actual": 200,
+              "passed": true
+            },
+            {
+              "type": "body.email",
+              "expected": "alice@example.com",
+              "actual": "alice@example.com",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PROFILE-001.json"
+      ],
+      "duration_ms": 3.6,
+      "attempt": 1,
+      "note": null
+    },
+    {
+      "test_id": "TC-PROFILE-002",
+      "req_id": "REQ-007",
+      "status": "passed",
+      "expected": "status 401",
+      "actual": "기대대로 동작",
+      "step_results": [
+        {
+          "step": 0,
+          "iteration": 0,
+          "request": {
+            "method": "GET",
+            "path": "/api/me",
+            "query": null,
+            "body": null,
+            "headers": {}
+          },
+          "response": {
+            "status": 401,
+            "body": {
+              "error": "unauthorized"
+            }
+          },
+          "error": null,
+          "elapsed_ms": 1.1,
+          "assertions": [
+            {
+              "type": "no_5xx",
+              "expected": "status < 500",
+              "actual": 401,
+              "passed": true
+            },
+            {
+              "type": "status",
+              "expected": 401,
+              "actual": 401,
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        "evidence/TC-PROFILE-002.json"
+      ],
+      "duration_ms": 2.3,
+      "attempt": 1,
+      "note": null
+    }
+  ]
+}

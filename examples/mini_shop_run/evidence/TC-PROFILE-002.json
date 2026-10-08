@@ -1,0 +1,84 @@
+{
+  "test_case": {
+    "id": "TC-PROFILE-002",
+    "req_id": "REQ-007",
+    "title": "내 정보 조회 인증 없이 요청",
+    "technique": "negative",
+    "also_covers": [],
+    "priority": "P3",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "GET",
+        "path": "/api/me",
+        "body": null,
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 401,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 401",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-PROFILE-002",
+    "req_id": "REQ-007",
+    "status": "passed",
+    "expected": "status 401",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "GET",
+          "path": "/api/me",
+          "query": null,
+          "body": null,
+          "headers": {}
+        },
+        "response": {
+          "status": 401,
+          "body": {
+            "error": "unauthorized"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.1,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 401,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 401,
+            "actual": 401,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-PROFILE-002.json"
+    ],
+    "duration_ms": 2.3,
+    "attempt": 1,
+    "note": null
+  }
+}

@@ -90,7 +90,7 @@ Fukuoka,1,2</textarea>
             if (pendingReject) pendingReject(new Error(e.message || "Worker failed to load"));
             else {
                 // Initial load error
-                document.getElementById('status').innerHTML = "Worker failed to load: " + (e.message || "Unknown error");
+                document.getElementById('status').textContent = "Worker failed to load: " + (e.message || "Unknown error");
                 document.getElementById('status').className = 'error';
             }
         };
@@ -127,7 +127,7 @@ Fukuoka,1,2</textarea>
                     k: 5
                 });
             } catch (err) {
-                statusDiv.innerHTML = `Error parsing data: ${err.message}`;
+                statusDiv.textContent = `Error parsing data: ${err.message}`;
                 statusDiv.className = 'error';
                 return;
             }
@@ -141,7 +141,7 @@ Fukuoka,1,2</textarea>
                 notices.push('숙박비 미포함');
             }
             if (notices.length > 0) {
-                noticesDiv.innerHTML = notices.join('<br>');
+                noticesDiv.textContent = notices.join(' | ');
             }
             
             statusDiv.innerHTML = 'Optimizing...';
@@ -185,7 +185,7 @@ Fukuoka,1,2</textarea>
                     resultsDiv.appendChild(div);
                 });
             } catch (err) {
-                statusDiv.innerHTML = `Error during optimization: ${err.message}`;
+                statusDiv.textContent = `Error during optimization: ${err.message}`;
                 statusDiv.className = 'error';
             }
         });

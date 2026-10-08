@@ -28,7 +28,7 @@ import { chromium } from 'playwright';
     await page.waitForSelector('.error', { timeout: 10000 });
     const statusText1 = await page.innerText('#status');
     console.log("Engine error message shown:", statusText1);
-    if (!statusText1.includes('Engine error') && !statusText1.includes('Error')) {
+    if (!statusText1.includes('visits must be')) {
         console.error("Test 1 Failed: error message not found in status");
         process.exit(1);
     }

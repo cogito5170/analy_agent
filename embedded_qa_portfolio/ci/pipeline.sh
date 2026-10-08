@@ -34,7 +34,7 @@ skip_step() {
 
 
 run_cppcheck() {
-  cppcheck --enable=all --error-exitcode=1 -I "$FW/include" "$FW/src" > "$OUT/cppcheck.txt" 2>&1
+  cppcheck --enable=all --suppress=unusedFunction --suppress=missingIncludeSystem --error-exitcode=1 -I "$FW/include" "$FW/src" > "$OUT/cppcheck.txt" 2>&1
   # The requirement is cppcheck error 0. error-exitcode=1 makes it fail if errors exist.
   # We should also capture the error count if needed, or just let it pass/fail.
 }

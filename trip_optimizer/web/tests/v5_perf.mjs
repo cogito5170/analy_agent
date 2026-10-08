@@ -19,7 +19,7 @@ import fs from 'fs';
     const siteUrl = process.env.SITE_URL || `file://${process.cwd()}/../../site/index.html`;
     await page.goto(siteUrl);
 
-    const problemRaw = fs.readFileSync('../../engine/build/v5_problem.json', 'utf8');
+    const problemRaw = fs.readFileSync('trip_optimizer/engine/build/v5_problem.json', 'utf8');
     const problem = JSON.parse(problemRaw);
 
     const times = await page.evaluate(async (prob) => {

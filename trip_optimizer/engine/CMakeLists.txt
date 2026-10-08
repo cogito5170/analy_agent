@@ -34,5 +34,7 @@ if(TRIP_BUILD_TESTS AND NOT EMSCRIPTEN)
   gtest_discover_tests(trip_tests)
 
   add_executable(v4_gen tests/v4_gen.cpp)
+  add_executable(v5_generator ../generator.cpp)
+  target_link_libraries(v5_generator PRIVATE trip_engine)
   target_link_libraries(v4_gen PRIVATE trip_engine)
 endif()

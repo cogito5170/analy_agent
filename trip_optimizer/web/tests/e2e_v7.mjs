@@ -21,9 +21,16 @@ async function runOptimization(page, costPerHour) {
 
     async function verifyPlans(plans) {
         for (let i = 0; i < plans.length; i++) {
-            const h4Text = await plans[i].textContent();
-            // check each breakdown part
-            const uls = await plans[i].$$('ul');
+            const h4Text = await plans[i].textContent('.plan-heading');
+            // Actually wait, let's just use textContent() on the element itself, since the h4 is a child or it is the element?
+            const planEl = plans[i];
+            const h4El = await planEl.$('h4');
+            const h4TextFull = await h4El.textContent();
+            
+            const totalMatch = h4TextFull.match(/Total Cost:\s*([\d\.]+)/);
+            const totalValue = totalMatch ? parseFloat(totalMatch[1]) : 0;
+
+            const uls = await planEl.$$('ul');
             const costLi = await uls[0].$$('li');
             let transport = 0, lodging = 0, timeValue = 0, sum = 0;
             for (const li of costLi) {
@@ -48,6 +55,8 @@ async function runOptimization(page, costPerHour) {
             assert.strictEqual(transport, legSum, `Plan ${i+1}: transport breakdown mismatch`);
             assert.strictEqual(lodging, staySum, `Plan ${i+1}: lodging breakdown mismatch`);
             assert.strictEqual(transport + lodging + timeValue, sum, `Plan ${i+1}: sum breakdown mismatch`);
+            console.log(`Plan ${i+1}: Sum ${sum} vs Total ${totalValue}`);
+            assert.strictEqual(sum, totalValue, `Plan ${i+1}: breakdown sum (${sum}) != heading total (${totalValue})`);
         }
     }
 
@@ -55,9 +64,14 @@ async function runOptimization(page, costPerHour) {
     await runOptimization(page, 0);
     const plans0 = await page.$$('.plan');
     await verifyPlans(plans0);
-
     const top1Text0 = await page.textContent('.plan:nth-child(1) h4');
     console.log("Top 1 with cost 0:", top1Text0);
+
+    // Run with 10000
+    await runOptimization(page, 10000);
+    const plans10000 = await page.$$('.plan');
+    await verifyPlans(plans10000);
+    console.log("Top 1 with cost 10000:", await page.textContent('.plan:nth-child(1) h4'));
 
     // Run with 12000
     await runOptimization(page, 12000);

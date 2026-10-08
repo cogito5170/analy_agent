@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Trip Optimizer</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         textarea { width: 100%; font-family: monospace; }
-        .error { color: red; }
-        .err-span { color: red; }
+        .error { color: #cc0000; }
+        .err-span { color: #cc0000; }
         .plan { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
         footer { margin-top: 40px; font-size: 0.8em; color: #666; }
         .day { margin-left: 20px; }
@@ -24,22 +25,22 @@
     <div>
         <label>Start Date (YYYY-MM-DD): <input type="date" id="startDate" value="2027-04-01"></label>
         <label>Planning Days: <input type="number" id="days" value="14" min="1"></label>
-        <label>1시간의 가치(원): <input type="number" id="costPerHour" value="12000" min="0"> <span id="cpmDisplay"></span></label>
+        <label>1시간의 가치(원): <input type="number" id="costPerHour" value="12000" min="0"> <span id="cpmDisplay"></span></label> <span id="costPerHourError" class="err-span"></span>
     </div>
 
     <button id="btnExample">Load Example Dataset</button>
     <p id="exampleNote" style="display:none; color: #555;"><i>Note: Prices in this example dataset are entirely invented!</i></p>
 
-    <h3>Visit Cities (city,min_stay,max_stay) <span id="visitLinesError" class="err-span"></span></h3>
+    <h3><label for="visitLines">Visit Cities (city,min_stay,max_stay)</label> <span id="visitLinesError" class="err-span"></span></h3>
     <textarea id="visitLines" rows="5">Tokyo,2,4
 Osaka,1,3
 Kyoto,2,4
 Fukuoka,1,2</textarea>
     
-    <h3>Transport CSV (from,to,date,mode,price,minutes) <span id="transportLinesError" class="err-span"></span></h3>
+    <h3><label for="transportLines">Transport CSV (from,to,date,mode,price,minutes)</label> <span id="transportLinesError" class="err-span"></span></h3>
     <textarea id="transportLines" rows="8"></textarea>
     
-    <h3>Lodging CSV (city,date,price) <span id="lodgingLinesError" class="err-span"></span></h3>
+    <h3><label for="lodgingLines">Lodging CSV (city,date,price)</label> <span id="lodgingLinesError" class="err-span"></span></h3>
     <textarea id="lodgingLines" rows="5"></textarea>
     
     <br><br>
@@ -132,7 +133,7 @@ Fukuoka,1,2</textarea>
                 lodgingLines: document.getElementById('lodgingLines').value,
                 startDate: document.getElementById('startDate').value,
                 days: parseInt(document.getElementById('days').value, 10),
-                costPerHour: parseInt(document.getElementById('costPerHour').value, 10) || 0,
+                costPerHour: document.getElementById('costPerHour').value,
                 k: 5
             };
         }
@@ -223,7 +224,7 @@ Fukuoka,1,2</textarea>
                     return;
                 }
                 
-                const cpm = Math.round((rawInput.costPerHour || 0) / 60);
+                const cpm = Math.round((parseInt(rawInput.costPerHour, 10) || 0) / 60);
                 
                 res.plans.forEach((plan, i) => {
                     const div = document.createElement('div');

@@ -70,11 +70,25 @@ jobs:
         run: |
           node trip_optimizer/engine/tests/v4_check.mjs
           
-      - name: Upload WASM engine
+      - name: Run Web Tests
+        run: |
+          cd trip_optimizer/web
+          node --test tests/model.test.mjs
+          
+      - name: Assemble Static Site
+        run: |
+          mkdir site
+          cp trip_optimizer/web/index.html site/
+          cp trip_optimizer/web/model.mjs site/
+          cp trip_optimizer/web/worker.mjs site/
+          cp trip_optimizer/engine/build_wasm/engine.mjs site/
+          cp trip_optimizer/engine/build_wasm/engine.wasm site/
+          sed -i "s/UNKNOWN_COMMIT/${GITHUB_SHA}/" site/index.html
+
+      - name: Upload Static Site
         uses: actions/upload-artifact@v7
         with:
-          name: wasm-engine
-          path: |
-            trip_optimizer/engine/build_wasm/engine.mjs
-            trip_optimizer/engine/build_wasm/engine.wasm
+          name: site
+          path: site
           retention-days: 1
+

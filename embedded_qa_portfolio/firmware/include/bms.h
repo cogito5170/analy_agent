@@ -37,6 +37,7 @@ typedef struct {
     uint16_t cell_mv[BMS_NUM_CELLS];
     int16_t temp_ddegc[BMS_NUM_TEMPS]; /* 0.1 degC */
     int32_t current_ma;                /* positive = discharge */
+    bool contactor_req;
 } bms_inputs_t;
 
 typedef struct {
@@ -50,6 +51,14 @@ typedef struct {
     uint8_t faults;
     uint8_t sig_cell_count;
     uint8_t sig_temp_count;
+    uint16_t cell_mv_avg[BMS_NUM_CELLS];
+    int16_t temp_ddegc_avg[BMS_NUM_TEMPS];
+    bool first_step;
+    uint8_t ov_count;
+    uint8_t uv_count;
+    uint8_t ot_count;
+    uint8_t utc_count;
+    uint8_t oc_count;
 } bms_t;
 
 void bms_init(bms_t *bms);

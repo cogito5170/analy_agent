@@ -23,6 +23,7 @@ void setUp(void)
         in.temp_ddegc[i] = 250;
     }
     in.current_ma = 0;
+    in.contactor_req = false;
 }
 
 void tearDown(void) {}
@@ -111,6 +112,150 @@ static void test_fault_is_latched(void)
     TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
 }
 
+/* @verifies SWR-005 */
+static void test_ov_boundary_and_debounce(void)
+{
+    const struct { uint16_t mv; int steps; bool fault; } cases[] = {
+        {4250, 50, false},
+        {4251, 2, false},
+        {4251, 3, true},
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        setUp();
+        step_n(10);
+        in.cell_mv[0] = cases[i].mv;
+        step_n(cases[i].steps);
+        TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OV) != 0);
+    }
+}
+
+/* @verifies SWR-006 */
+static void test_uv_boundary_and_debounce(void)
+{
+    const struct { uint16_t mv; int steps; bool fault; } cases[] = {
+        {2800, 50, false},
+        {2799, 2, false},
+        {2799, 3, true},
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        setUp();
+        step_n(10);
+        in.cell_mv[0] = cases[i].mv;
+        step_n(cases[i].steps);
+        TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_UV) != 0);
+    }
+}
+
+/* @verifies SWR-007 */
+static void test_ot_boundary_and_debounce(void)
+{
+    const struct { int16_t dc; int steps; bool fault; } cases[] = {
+        {600, 50, false},
+        {601, 2, false},
+        {601, 3, true},
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        setUp();
+        step_n(10);
+        in.temp_ddegc[0] = cases[i].dc;
+        step_n(cases[i].steps);
+        TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OT) != 0);
+    }
+}
+
+/* @verifies SWR-008 */
+static void test_utc_boundary_and_debounce(void)
+{
+    const struct { int16_t dc; int32_t ma; int steps; bool fault; } cases[] = {
+        {0, -1000, 50, false},
+        {-1, 0, 50, false},
+        {-1, -1000, 2, false},
+        {-1, -1000, 3, true},
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        setUp();
+        step_n(10);
+        in.temp_ddegc[0] = cases[i].dc;
+        in.current_ma = cases[i].ma;
+        step_n(cases[i].steps);
+        TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_UTC) != 0);
+    }
+}
+
+/* @verifies SWR-009 */
+static void test_oc_boundary_and_debounce(void)
+{
+    const struct { int32_t ma; int steps; bool fault; } cases[] = {
+        {150000, 50, false},
+        {150001, 2, false},
+        {150001, 3, true},
+        {-50000, 50, false},
+        {-50001, 2, false},
+        {-50001, 3, true},
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        setUp();
+        step_n(10);
+        in.current_ma = cases[i].ma;
+        step_n(cases[i].steps);
+        TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OC) != 0);
+    }
+}
+
+/* @verifies SWR-010 */
+static void test_contactor_opens_on_fault_within_deadline(void)
+{
+    step_n(10);
+    in.contactor_req = true;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    
+    in.cell_mv[0] = 5000;
+    step_n(3);
+    TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
+    TEST_ASSERT_FALSE(out.contactor_close);
+}
+
+/* @verifies SWR-011 */
+static void test_fault_ignores_contactor_req(void)
+{
+    in.cell_mv[0] = 5000;
+    step_n(3);
+    TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
+    
+    in.contactor_req = true;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
+    TEST_ASSERT_FALSE(out.contactor_close);
+}
+
+/* @verifies SWR-013 */
+static void test_standby_to_closed_on_req(void)
+{
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_STANDBY, out.state);
+    
+    in.contactor_req = true;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
+    TEST_ASSERT_TRUE(out.contactor_close);
+}
+
+/* @verifies SWR-014 */
+static void test_closed_to_standby_on_req_drop(void)
+{
+    step_n(1);
+    in.contactor_req = true;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
+    
+    in.contactor_req = false;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_STANDBY, out.state);
+    TEST_ASSERT_FALSE(out.contactor_close);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -120,5 +265,15 @@ int main(void)
     RUN_TEST(test_signal_fault_debounce);
     RUN_TEST(test_intermittent_signal_does_not_fault);
     RUN_TEST(test_fault_is_latched);
+    
+    RUN_TEST(test_ov_boundary_and_debounce);
+    RUN_TEST(test_uv_boundary_and_debounce);
+    RUN_TEST(test_ot_boundary_and_debounce);
+    RUN_TEST(test_utc_boundary_and_debounce);
+    RUN_TEST(test_oc_boundary_and_debounce);
+    RUN_TEST(test_contactor_opens_on_fault_within_deadline);
+    RUN_TEST(test_fault_ignores_contactor_req);
+    RUN_TEST(test_standby_to_closed_on_req);
+    RUN_TEST(test_closed_to_standby_on_req_drop);
     return UNITY_END();
 }

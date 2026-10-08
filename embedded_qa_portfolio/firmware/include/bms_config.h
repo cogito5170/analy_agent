@@ -25,3 +25,12 @@
 #define BMS_INIT_DEADLINE_MS 100
 
 #endif /* BMS_CONFIG_H */
+
+/* Protection thresholds (SWR-005..009) */
+#define BMS_OV_THRESHOLD_MV 4250
+#define BMS_UV_THRESHOLD_MV 2800
+#define BMS_OT_THRESHOLD_DC 600
+#define BMS_UTC_THRESHOLD_DC 0
+#define BMS_OC_DISCHARGE_MA 150000
+#define BMS_OC_CHARGE_MA 50000
+

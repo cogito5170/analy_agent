@@ -28,11 +28,11 @@ import fs from 'fs';
         stayMinArr: raw.stay_min,
         stayMaxArr: raw.stay_max,
         V: raw.V,
-        D: raw.D,
-        modes: raw.modes,
+        days: raw.D,
+        M: raw.modes,
         departMin: raw.depart_min,
         departMax: raw.depart_max,
-        cpm: raw.cost_per_minute,
+        costPerMinute: raw.cost_per_minute,
         k: raw.k
     };
 

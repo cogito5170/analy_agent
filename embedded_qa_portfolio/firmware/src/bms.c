@@ -38,18 +38,20 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
     bool temps_ok = true;
 
     for (int i = 0; i < BMS_NUM_CELLS; i++) {
-        cells_ok = cells_ok && cell_signal_ok(in->cell_mv[i]);   /* SWR-002 */
+        bool ok = cell_signal_ok(in->cell_mv[i]);
+        cells_ok = cells_ok && ok;   /* SWR-002 */
         if (bms->first_step) {
             bms->cell_mv_avg[i] = in->cell_mv[i];
-        } else {
+        } else if (ok) {
             bms->cell_mv_avg[i] = (uint16_t)((bms->cell_mv_avg[i] + in->cell_mv[i]) / 2);
         }
     }
     for (int i = 0; i < BMS_NUM_TEMPS; i++) {
-        temps_ok = temps_ok && temp_signal_ok(in->temp_ddegc[i]); /* SWR-003 */
+        bool ok = temp_signal_ok(in->temp_ddegc[i]);
+        temps_ok = temps_ok && ok; /* SWR-003 */
         if (bms->first_step) {
             bms->temp_ddegc_avg[i] = in->temp_ddegc[i];
-        } else {
+        } else if (ok) {
             bms->temp_ddegc_avg[i] = (int16_t)((bms->temp_ddegc_avg[i] + in->temp_ddegc[i]) / 2);
         }
     }

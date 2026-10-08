@@ -28,19 +28,20 @@ import fs from 'fs';
             let runs = 0;
             const runTimes = [];
             let start;
+            worker.postMessage({ type: 'init' });
             worker.onmessage = (e) => {
-                if (e.data.type === 'READY') {
+                if (e.data.type === 'ready') {
                     start = performance.now();
-                    worker.postMessage({ type: 'OPTIMIZE', payload: prob });
+                    worker.postMessage({ type: 'optimize', payload: prob });
                     return;
                 }
                 
-                if (e.data.type === 'ERROR') {
+                if (e.data.type === 'error') {
                     reject(e.data.payload);
                     return;
                 }
 
-                if (e.data.type === 'RESULT') {
+                if (e.data.type === 'success') {
                     const elapsed = performance.now() - start;
                     if (runs > 0) {
                         runTimes.push(elapsed);
@@ -48,7 +49,7 @@ import fs from 'fs';
                     runs++;
                     if (runs <= 5) {
                         start = performance.now();
-                        worker.postMessage({ type: 'OPTIMIZE', payload: prob });
+                        worker.postMessage({ type: 'optimize', payload: prob });
                     } else {
                         worker.terminate();
                         resolve(runTimes);

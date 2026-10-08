@@ -19,15 +19,62 @@ jobs:
       - name: Configure CMake
         run: |
           cd trip_optimizer/engine
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror" ..
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror"
       
       - name: Build
         run: |
-          cd trip_optimizer/engine/build
-          make
+          cmake --build trip_optimizer/engine/build -j2
           
       - name: Test
         run: |
           cd trip_optimizer/engine/build
           ctest --output-on-failure
+          
+      - name: Generate V4 reference
+        run: |
+          cd trip_optimizer/engine/build
+          ./v4_gen > ../tests/v4_reference.json
+          
+      - name: Upload V4 reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-reference
+          path: trip_optimizer/engine/tests/v4_reference.json
+          retention-days: 1
+
+  web:
+    runs-on: ubuntu-latest
+    needs: engine
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download V4 reference
+        uses: actions/download-artifact@v4
+        with:
+          name: v4-reference
+          path: trip_optimizer/engine/tests
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Build WASM
+        run: |
+          cd trip_optimizer/engine
+          cmake -B build_wasm -S . -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror"
+          cmake --build build_wasm -j2
+          
+      - name: Run V4 Check
+        run: |
+          node trip_optimizer/engine/tests/v4_check.mjs
+          
+      - name: Upload WASM engine
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-engine
+          path: |
+            trip_optimizer/engine/build_wasm/engine.mjs
+            trip_optimizer/engine/build_wasm/engine.wasm
+          retention-days: 1

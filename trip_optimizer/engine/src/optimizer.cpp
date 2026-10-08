@@ -84,7 +84,7 @@ public:
                 for (int m = 0; m < p_.modes; m++) {
                     int64_t c;
                     if (!leg_cost(0, j, d, m, c)) continue;
-                    push_bounded(states_[sidx(1 << (j - 1), j, d)], Entry{c, -1, 0, 0, d, m}, k_, better);
+                    push_bounded(states_[static_cast<size_t>(sidx(1 << (j - 1), j, d))], Entry{c, -1, 0, 0, d, m}, k_, better);
                 }
             }
         }

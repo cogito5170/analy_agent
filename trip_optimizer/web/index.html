@@ -24,7 +24,7 @@
     <div>
         <label>Start Date (YYYY-MM-DD): <input type="date" id="startDate" value="2027-04-01"></label>
         <label>Planning Days: <input type="number" id="days" value="14" min="1"></label>
-        <label>1시간의 가치(원): <input type="number" id="costPerHour" value="12000" min="0"> <span id="cpmDisplay"></span></label>
+        <label>1시간의 가치(원): <input type="number" id="costPerHour" value="12000" min="0"> <span id="cpmDisplay"></span></label> <span id="costPerHourError" class="err-span"></span>
     </div>
 
     <button id="btnExample">Load Example Dataset</button>
@@ -132,7 +132,7 @@ Fukuoka,1,2</textarea>
                 lodgingLines: document.getElementById('lodgingLines').value,
                 startDate: document.getElementById('startDate').value,
                 days: parseInt(document.getElementById('days').value, 10),
-                costPerHour: parseInt(document.getElementById('costPerHour').value, 10) || 0,
+                costPerHour: document.getElementById('costPerHour').value,
                 k: 5
             };
         }
@@ -223,7 +223,7 @@ Fukuoka,1,2</textarea>
                     return;
                 }
                 
-                const cpm = Math.round((rawInput.costPerHour || 0) / 60);
+                const cpm = Math.round((parseInt(rawInput.costPerHour, 10) || 0) / 60);
                 
                 res.plans.forEach((plan, i) => {
                     const div = document.createElement('div');

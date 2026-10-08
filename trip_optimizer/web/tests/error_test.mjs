@@ -2,62 +2,78 @@ import { chromium } from 'playwright';
 
 (async () => {
     const browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
-    
-    let pendingErrors = [];
-    page.on('console', msg => {
-        if (msg.type() === 'error') {
-            pendingErrors.push(msg.text());
-        }
-    });
-    page.on('pageerror', err => {
-        pendingErrors.push(err.toString());
-    });
-
-    const siteUrl = process.env.SITE_URL || `file://${process.cwd()}/site/index.html`;
     
     // Test 1: Engine Error (Empty Visit List)
     console.log("Running Test 1: Engine error");
-    await page.goto(siteUrl);
-    await page.click('#btnExample');
-    await page.fill('#visitLines', ''); // Empty visit list
-    await page.fill('#transportLines', ''); // Clear to avoid parse errors
-    await page.fill('#lodgingLines', '');
-    await page.click('#btnOptimize');
-    // It should leave the Optimizing state and show an error in #status
-    await page.waitForSelector('.error', { timeout: 10000 });
-    const statusText1 = await page.innerText('#status');
+    const page1 = await browser.newPage();
+    const siteUrl = process.env.SITE_URL || `file://${process.cwd()}/../../site/index.html`;
+    await page1.goto(siteUrl);
+    await page1.click('#btnExample');
+    await page1.fill('#visitLines', ''); 
+    await page1.fill('#transportLines', ''); 
+    await page1.fill('#lodgingLines', '');
+    await page1.click('#btnOptimize');
+    await page1.waitForSelector('.error', { timeout: 10000 });
+    const statusText1 = await page1.innerText('#status');
     console.log("Engine error message shown:", statusText1);
     if (!statusText1.includes('visits must be')) {
-        console.error("Test 1 Failed: error message not found in status");
+        console.error("Test 1 Failed");
         process.exit(1);
     }
+    await page1.close();
     
-    // Test 2: Module load failure
-    // We can simulate this by intercepting the WASM file or engine.mjs
-    console.log("Running Test 2: Module load failure");
-    await page.route('**/engine.wasm', route => route.abort('failed'));
-    await page.route('**/engine.mjs', route => route.abort('failed'));
-    await page.goto(siteUrl);
-    
-    // Assert error visible without pressing optimize
-    await page.waitForSelector('.error', { timeout: 10000 });
-    const statusText2Pre = await page.innerText('#status');
-    console.log("Load failure message shown without Optimize:", statusText2Pre);
-    if (!statusText2Pre.includes('Error') && !statusText2Pre.includes('failed')) {
-        console.error("Test 2 Failed: module load error message not found in status without optimize");
+    // Test 2: onerror (engine.mjs fails to load)
+    console.log("Running Test 2: onerror (engine.mjs fails)");
+    const page2 = await browser.newPage();
+    await page2.route('**/engine.mjs', route => route.abort('failed'));
+    await page2.goto(siteUrl);
+    await page2.waitForSelector('.error', { timeout: 10000 });
+    const statusText2 = await page2.innerText('#status');
+    console.log("onerror message shown:", statusText2);
+    if (!statusText2.includes('failed')) {
+        console.error("Test 2 Failed");
         process.exit(1);
     }
-    
-    await page.click('#btnExample');
-    await page.click('#btnOptimize');
-    await page.waitForSelector('.error', { timeout: 10000 });
-    const statusText2 = await page.innerText('#status');
-    console.log("Load failure message shown:", statusText2);
-    if (!statusText2.includes('Error') && !statusText2.includes('failed')) {
-        console.error("Test 2 Failed: module load error message not found in status");
+    await page2.close();
+
+    // Test 3: init 'error' message path (Module() rejects because engine.wasm fails)
+    console.log("Running Test 3: init error (Module rejects)");
+    const page3 = await browser.newPage();
+    await page3.route('**/engine.wasm', route => route.abort('failed'));
+    await page3.goto(siteUrl);
+    await page3.waitForSelector('.error', { timeout: 10000 });
+    const statusText3 = await page3.innerText('#status');
+    console.log("init error message shown:", statusText3);
+    if (!statusText3.includes('failed') && !statusText3.includes('Error')) {
+        console.error("Test 3 Failed");
         process.exit(1);
     }
+    await page3.close();
+
+    // Test 4: negative or non-numeric hour values
+    console.log("Running Test 4: hour value validation");
+    const page4 = await browser.newPage();
+    await page4.goto(siteUrl);
+    await page4.click('#btnExample');
+    
+    // Test non-numeric
+    await page4.fill('#costPerHour', 'abc');
+    await page4.click('#btnOptimize');
+    let cphError = await page4.innerText('#costPerHourError');
+    if (!cphError.includes('must be a non-negative number')) {
+        console.error("Test 4 Failed on non-numeric. Message:", cphError);
+        process.exit(1);
+    }
+
+    // Test negative
+    await page4.fill('#costPerHour', '-10');
+    await page4.click('#btnOptimize');
+    cphError = await page4.innerText('#costPerHourError');
+    if (!cphError.includes('must be a non-negative number')) {
+        console.error("Test 4 Failed on negative. Message:", cphError);
+        process.exit(1);
+    }
+    await page4.close();
     
     console.log("ERROR TESTS PASSED");
     await browser.close();

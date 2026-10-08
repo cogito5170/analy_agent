@@ -35,11 +35,32 @@ jobs:
           cd trip_optimizer/engine/build
           ./v4_gen > ../tests/v4_reference.json
           
+      - name: Generate and Time V5 natively
+        run: |
+          cd trip_optimizer/engine/build
+          ./v5_generator > native_v5.log
+          cat native_v5.log
+          MEDIAN=$(grep 'Native V5 median time' native_v5.log | awk '{print $5}')
+          BUDGET=$(grep 'Native Budget:' ../../../docs/perf.md | awk '{print $3}')
+          echo "Native V5 median time: $MEDIAN ms"
+          echo "Native Budget: $BUDGET ms"
+          if (( $(echo "$MEDIAN > $BUDGET" | bc -l) )); then
+            echo "Error: Native performance exceeded budget!"
+            exit 1
+          fi
+          
       - name: Upload V4 reference
         uses: actions/upload-artifact@v7
         with:
           name: v4-reference
           path: trip_optimizer/engine/tests/v4_reference.json
+          retention-days: 1
+          
+      - name: Upload V5 problem
+        uses: actions/upload-artifact@v7
+        with:
+          name: v5-problem
+          path: trip_optimizer/engine/build/v5_problem.json
           retention-days: 1
 
   web:
@@ -53,6 +74,12 @@ jobs:
         with:
           name: v4-reference
           path: trip_optimizer/engine/tests
+
+      - name: Download V5 problem
+        uses: actions/download-artifact@v8
+        with:
+          name: v5-problem
+          path: trip_optimizer/engine/build
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
@@ -100,6 +127,31 @@ jobs:
           node trip_optimizer/web/tests/smoke.mjs
           node trip_optimizer/web/tests/error_test.mjs
           node trip_optimizer/web/tests/e2e_v7.mjs
+          node trip_optimizer/web/tests/v5_perf.mjs
+          
+      - name: Run Lighthouse
+        run: |
+          npm install -g lighthouse@12.2.0
+          lighthouse http://localhost:8080/ --output json --output-path lighthouse.json --chrome-flags="--headless"
+          PERF_SCORE=$(node -e "console.log(Math.round(require('./lighthouse.json').categories.performance.score * 100))")
+          A11Y_SCORE=$(node -e "console.log(Math.round(require('./lighthouse.json').categories.accessibility.score * 100))")
+          echo "Lighthouse Performance: $PERF_SCORE"
+          echo "Lighthouse Accessibility: $A11Y_SCORE"
+          
+          EXPECTED_PERF=$(grep 'Lighthouse Performance:' trip_optimizer/docs/perf.md | awk -F': ' '{print $2}')
+          EXPECTED_A11Y=$(grep 'Lighthouse Accessibility:' trip_optimizer/docs/perf.md | awk -F': ' '{print $2}')
+          
+          if [ ! -z "$EXPECTED_PERF" ]; then
+            if (( $PERF_SCORE < $EXPECTED_PERF - 5 )); then
+              echo "::warning::Performance score dropped by more than 5 points: $PERF_SCORE vs $EXPECTED_PERF"
+            fi
+          fi
+          
+          if [ ! -z "$EXPECTED_A11Y" ]; then
+            if (( $A11Y_SCORE < $EXPECTED_A11Y - 5 )); then
+              echo "::warning::Accessibility score dropped by more than 5 points: $A11Y_SCORE vs $EXPECTED_A11Y"
+            fi
+          fi
           
       - name: Upload Screenshot
         uses: actions/upload-artifact@v7
@@ -107,6 +159,14 @@ jobs:
           name: smoke-screenshot
           path: smoke-screenshot.png
           retention-days: 1
+          
+      - name: Upload Lighthouse Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-report
+          path: lighthouse.json
+          retention-days: 1
+          
       - name: Upload Static Site
         uses: actions/upload-artifact@v7
         with:

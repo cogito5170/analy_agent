@@ -9,16 +9,20 @@ export function parseData({
     k,
     costPerHour
 }) {
-    const costPerMinute = Math.round((costPerHour || 0) / 60);
-
-    // 1. Visit Cities (방문 도시)
-    // Format: city,min_stay,max_stay
     function throwError(inputId, lineNum, msg) {
         const e = new Error(msg);
         e.inputId = inputId;
         e.lineNum = lineNum;
         throw e;
     }
+
+    if (costPerHour === '' || costPerHour === null || costPerHour === undefined || isNaN(Number(costPerHour)) || Number(costPerHour) < 0) {
+        throwError('costPerHour', null, "must be a non-negative number");
+    }
+    const costPerMinute = Math.round(Number(costPerHour) / 60);
+
+    // 1. Visit Cities (방문 도시)
+    // Format: city,min_stay,max_stay
     const visits = [];
     const cities = new Map();
     cities.set(startCity, 0); // 0 = start

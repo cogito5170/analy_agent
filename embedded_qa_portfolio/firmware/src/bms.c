@@ -42,7 +42,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         if (bms->first_step) {
             bms->cell_mv_avg[i] = in->cell_mv[i];
         } else {
-            bms->cell_mv_avg[i] = (bms->cell_mv_avg[i] + in->cell_mv[i]) / 2;
+            bms->cell_mv_avg[i] = (uint16_t)((bms->cell_mv_avg[i] + in->cell_mv[i]) / 2);
         }
     }
     for (int i = 0; i < BMS_NUM_TEMPS; i++) {
@@ -50,7 +50,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         if (bms->first_step) {
             bms->temp_ddegc_avg[i] = in->temp_ddegc[i];
         } else {
-            bms->temp_ddegc_avg[i] = (bms->temp_ddegc_avg[i] + in->temp_ddegc[i]) / 2;
+            bms->temp_ddegc_avg[i] = (int16_t)((bms->temp_ddegc_avg[i] + in->temp_ddegc[i]) / 2);
         }
     }
     bms->first_step = false;

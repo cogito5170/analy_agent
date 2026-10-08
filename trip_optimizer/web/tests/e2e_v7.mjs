@@ -55,6 +55,7 @@ async function runOptimization(page, costPerHour) {
             assert.strictEqual(transport, legSum, `Plan ${i+1}: transport breakdown mismatch`);
             assert.strictEqual(lodging, staySum, `Plan ${i+1}: lodging breakdown mismatch`);
             assert.strictEqual(transport + lodging + timeValue, sum, `Plan ${i+1}: sum breakdown mismatch`);
+            console.log(`Plan ${i+1}: Sum ${sum} vs Total ${totalValue}`);
             assert.strictEqual(sum, totalValue, `Plan ${i+1}: breakdown sum (${sum}) != heading total (${totalValue})`);
         }
     }

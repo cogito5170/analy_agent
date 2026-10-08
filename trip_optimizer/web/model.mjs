@@ -7,8 +7,13 @@ export function parseData({
     startDate, // YYYY-MM-DD
     days,
     k,
-    costPerHour
+    costPerHour,
+    costPerMinute
 }) {
+    if (costPerHour === undefined && costPerMinute !== undefined) {
+        costPerHour = costPerMinute * 60;
+    }
+
     function throwError(inputId, lineNum, msg) {
         const e = new Error(msg);
         e.inputId = inputId;
@@ -19,7 +24,7 @@ export function parseData({
     if (costPerHour === '' || costPerHour === null || costPerHour === undefined || isNaN(Number(costPerHour)) || Number(costPerHour) < 0) {
         throwError('costPerHour', null, "must be a non-negative number");
     }
-    const costPerMinute = Math.round(Number(costPerHour) / 60);
+    costPerMinute = Math.round(Number(costPerHour) / 60);
 
     // 1. Visit Cities (방문 도시)
     // Format: city,min_stay,max_stay

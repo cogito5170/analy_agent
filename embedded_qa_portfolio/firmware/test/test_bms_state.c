@@ -423,6 +423,7 @@ static void test_swr_019(void)
 }
 
 
+/* @verifies SWR-017 */
 static void test_determinism(void)
 {
     bms_t bms1, bms2;
@@ -505,7 +506,7 @@ int main(void)
     RUN_TEST(test_swr_017);
     RUN_TEST(test_swr_018);
     RUN_TEST(test_swr_019);
-    return UNITY_END();
-}    RUN_TEST(test_determinism);
+        RUN_TEST(test_determinism);
     RUN_TEST(test_swr_030_comm_loss_contactor_handling);
-
+return UNITY_END();
+}

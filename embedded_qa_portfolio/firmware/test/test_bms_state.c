@@ -116,12 +116,13 @@ static void test_fault_is_latched(void)
 static void test_ov_boundary_and_debounce(void)
 {
     const struct { uint16_t mv; int steps; bool fault; } cases[] = {
-        {4250, 3, false},
+        {4250, 50, false},
         {4251, 2, false},
         {4251, 3, true},
     };
     for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
         setUp();
+        step_n(10);
         in.cell_mv[0] = cases[i].mv;
         step_n(cases[i].steps);
         TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OV) != 0);
@@ -132,12 +133,13 @@ static void test_ov_boundary_and_debounce(void)
 static void test_uv_boundary_and_debounce(void)
 {
     const struct { uint16_t mv; int steps; bool fault; } cases[] = {
-        {2800, 3, false},
+        {2800, 50, false},
         {2799, 2, false},
         {2799, 3, true},
     };
     for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
         setUp();
+        step_n(10);
         in.cell_mv[0] = cases[i].mv;
         step_n(cases[i].steps);
         TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_UV) != 0);
@@ -148,12 +150,13 @@ static void test_uv_boundary_and_debounce(void)
 static void test_ot_boundary_and_debounce(void)
 {
     const struct { int16_t dc; int steps; bool fault; } cases[] = {
-        {600, 3, false},
+        {600, 50, false},
         {601, 2, false},
         {601, 3, true},
     };
     for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
         setUp();
+        step_n(10);
         in.temp_ddegc[0] = cases[i].dc;
         step_n(cases[i].steps);
         TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OT) != 0);
@@ -164,13 +167,14 @@ static void test_ot_boundary_and_debounce(void)
 static void test_utc_boundary_and_debounce(void)
 {
     const struct { int16_t dc; int32_t ma; int steps; bool fault; } cases[] = {
-        {0, -1000, 3, false},
-        {-1, 0, 3, false},
+        {0, -1000, 50, false},
+        {-1, 0, 50, false},
         {-1, -1000, 2, false},
         {-1, -1000, 3, true},
     };
     for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
         setUp();
+        step_n(10);
         in.temp_ddegc[0] = cases[i].dc;
         in.current_ma = cases[i].ma;
         step_n(cases[i].steps);
@@ -182,15 +186,16 @@ static void test_utc_boundary_and_debounce(void)
 static void test_oc_boundary_and_debounce(void)
 {
     const struct { int32_t ma; int steps; bool fault; } cases[] = {
-        {150000, 3, false},
+        {150000, 50, false},
         {150001, 2, false},
         {150001, 3, true},
-        {-50000, 3, false},
+        {-50000, 50, false},
         {-50001, 2, false},
         {-50001, 3, true},
     };
     for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
         setUp();
+        step_n(10);
         in.current_ma = cases[i].ma;
         step_n(cases[i].steps);
         TEST_ASSERT_EQUAL(cases[i].fault, (out.faults & BMS_FAULT_OC) != 0);
@@ -200,7 +205,7 @@ static void test_oc_boundary_and_debounce(void)
 /* @verifies SWR-010 */
 static void test_contactor_opens_on_fault_within_deadline(void)
 {
-    step_n(1);
+    step_n(10);
     in.contactor_req = true;
     step_n(1);
     TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);

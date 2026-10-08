@@ -72,19 +72,19 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
     bool oc = false;
 
     for (int i = 0; i < BMS_NUM_CELLS; i++) {
-        if (bms->cell_mv_avg[i] > BMS_OV_THRESHOLD_MV) {
+        if (in->cell_mv[i] > BMS_OV_THRESHOLD_MV) {
             any_ov = true;
         }
-        if (bms->cell_mv_avg[i] < BMS_UV_THRESHOLD_MV) {
+        if (in->cell_mv[i] < BMS_UV_THRESHOLD_MV) {
             any_uv = true;
         }
     }
 
     for (int i = 0; i < BMS_NUM_TEMPS; i++) {
-        if (bms->temp_ddegc_avg[i] > BMS_OT_THRESHOLD_DC) {
+        if (in->temp_ddegc[i] > BMS_OT_THRESHOLD_DC) {
             any_ot = true;
         }
-        if (in->current_ma < 0 && bms->temp_ddegc_avg[i] < BMS_UTC_THRESHOLD_DC) {
+        if (in->current_ma < 0 && in->temp_ddegc[i] < BMS_UTC_THRESHOLD_DC) {
             any_utc = true;
         }
     }

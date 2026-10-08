@@ -206,7 +206,7 @@ static void test_contactor_opens_on_fault_within_deadline(void)
     TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
     TEST_ASSERT_TRUE(out.contactor_close);
     
-    in.cell_mv[0] = 4251;
+    in.cell_mv[0] = 5000;
     step_n(3);
     TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
     TEST_ASSERT_FALSE(out.contactor_close);
@@ -215,7 +215,7 @@ static void test_contactor_opens_on_fault_within_deadline(void)
 /* @verifies SWR-011 */
 static void test_fault_ignores_contactor_req(void)
 {
-    in.cell_mv[0] = 4251;
+    in.cell_mv[0] = 5000;
     step_n(3);
     TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
     

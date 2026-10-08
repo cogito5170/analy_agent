@@ -1,0 +1,25 @@
+name: embedded-qa
+
+on:
+  push:
+    paths: ["embedded_qa_portfolio/**", ".github/workflows/embedded-qa.yml"]
+  pull_request:
+    paths: ["embedded_qa_portfolio/**", ".github/workflows/embedded-qa.yml"]
+
+defaults:
+  run:
+    working-directory: embedded_qa_portfolio
+
+jobs:
+  requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Requirement quality check
+        run: python tools/req_check.py
+      - name: Tool tests
+        run: python -m unittest discover -s tests -v

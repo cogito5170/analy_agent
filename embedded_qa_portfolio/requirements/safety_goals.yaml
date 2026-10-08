@@ -1,0 +1,44 @@
+# Safety goals and functional features — parents of the SW requirements.
+# Safety goals come from docs/D3_HARA_lite.md. ASIL values are a learning-exercise
+# estimate, not an assessed result.
+
+safety_goals:
+  - id: SG-01
+    text: 셀 과전압 또는 충전 조건 위반 시 충전 전류를 차단해야 한다
+    asil: D
+    safe_state: 컨택터 개방
+    ftti_ms: 500
+    hazards: [HZ-01]
+  - id: SG-02
+    text: 셀 저전압 시 방전 전류를 차단해야 한다
+    asil: C
+    safe_state: 컨택터 개방
+    ftti_ms: 500
+    hazards: [HZ-02]
+  - id: SG-03
+    text: 셀 과온 시 전류를 차단해야 한다
+    asil: C
+    safe_state: 컨택터 개방
+    ftti_ms: 500
+    hazards: [HZ-03]
+  - id: SG-04
+    text: 과전류 시 전류를 차단해야 한다
+    asil: B
+    safe_state: 컨택터 개방
+    ftti_ms: 100
+    hazards: [HZ-04]
+  - id: SG-05
+    text: 고장이 없을 때 주행 중 컨택터를 개방해서는 안 된다
+    asil: B
+    safe_state: 컨택터 유지 및 경고
+    hazards: [HZ-05]
+
+features:
+  - id: FN-01
+    text: VCU 요청에 따라 메인 컨택터를 닫고 연다
+  - id: FN-02
+    text: 팩 상태와 셀 측정값을 CAN으로 주기 보고한다
+  - id: FN-03
+    text: 전류 적산으로 SOC를 추정한다
+  - id: FN-04
+    text: UDS로 고장 코드와 측정값을 진단 테스터에 제공한다

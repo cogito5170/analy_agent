@@ -1,5 +1,7 @@
 # analy_agent — QA 조직을 Agent로 분해한 테스트 파이프라인
 
+> 같은 저장소의 두 번째 프로젝트: [`embedded_qa_portfolio/`](embedded_qa_portfolio/) — BMS SIL/HIL 검증 포트폴리오 (진행 중)
+
 "QA 포트폴리오 글을 써주는 AI"가 아니다. **QA 엔지니어의 업무 프로세스를 역할별 Agent로 나누고,
 Agent끼리 semantic JSON 계약으로만 협업하게 만든 시스템**이다. 실제 웹 서비스(데모 앱)를 대상으로
 요구사항 분석부터 리스크 산정, 테스트 설계, 실행, 결함 분류, 자체 검토, 증거 검증, 포트폴리오 구성까지

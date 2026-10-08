@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "Defect": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "req_id": {
+          "title": "Req Id",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "reproduction": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reproduction",
+          "type": "array"
+        },
+        "expected": {
+          "title": "Expected",
+          "type": "string"
+        },
+        "actual": {
+          "title": "Actual",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "related_tests": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Tests",
+          "type": "array"
+        },
+        "reproducible": {
+          "title": "Reproducible",
+          "type": "boolean"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "req_id",
+        "severity",
+        "priority",
+        "reproduction",
+        "expected",
+        "actual",
+        "evidence",
+        "related_tests",
+        "reproducible",
+        "confidence"
+      ],
+      "title": "Defect",
+      "type": "object"
+    },
+    "Triage": {
+      "additionalProperties": false,
+      "properties": {
+        "test_id": {
+          "title": "Test Id",
+          "type": "string"
+        },
+        "classification": {
+          "enum": [
+            "product_bug",
+            "test_bug",
+            "environment",
+            "requirement_ambiguity",
+            "spec_mismatch"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "reproduced_on_rerun": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reproduced On Rerun"
+        },
+        "transient_noise": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transient Noise"
+        },
+        "defect_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Defect Id"
+        }
+      },
+      "required": [
+        "test_id",
+        "classification",
+        "reason",
+        "reproduced_on_rerun"
+      ],
+      "title": "Triage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_defect/1",
+      "default": "qa_defect/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "triage": {
+      "items": {
+        "$ref": "#/$defs/Triage"
+      },
+      "title": "Triage",
+      "type": "array"
+    },
+    "defects": {
+      "items": {
+        "$ref": "#/$defs/Defect"
+      },
+      "title": "Defects",
+      "type": "array"
+    },
+    "clarifications_needed": {
+      "items": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "title": "Clarifications Needed",
+      "type": "array"
+    }
+  },
+  "required": [
+    "triage",
+    "defects",
+    "clarifications_needed"
+  ],
+  "title": "DefectReport",
+  "type": "object",
+  "$id": "qa_defect/1"
+}

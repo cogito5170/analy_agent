@@ -1,0 +1,124 @@
+{
+  "$defs": {
+    "Risk": {
+      "additionalProperties": false,
+      "properties": {
+        "req_id": {
+          "title": "Req Id",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "impact": {
+          "$ref": "#/$defs/RiskFactor"
+        },
+        "likelihood": {
+          "$ref": "#/$defs/RiskFactor"
+        },
+        "detectability": {
+          "$ref": "#/$defs/RiskFactor"
+        },
+        "risk_score": {
+          "title": "Risk Score",
+          "type": "number"
+        },
+        "priority": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "test_depth": {
+          "enum": [
+            "exhaustive",
+            "thorough",
+            "standard",
+            "smoke"
+          ],
+          "title": "Test Depth",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "req_id",
+        "target",
+        "impact",
+        "likelihood",
+        "detectability",
+        "risk_score",
+        "priority",
+        "test_depth",
+        "reason"
+      ],
+      "title": "Risk",
+      "type": "object"
+    },
+    "RiskFactor": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "drivers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Drivers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "drivers"
+      ],
+      "title": "RiskFactor",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_risk/1",
+      "default": "qa_risk/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "formula": {
+      "title": "Formula",
+      "type": "string"
+    },
+    "priority_bands": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Priority Bands",
+      "type": "object"
+    },
+    "risks": {
+      "items": {
+        "$ref": "#/$defs/Risk"
+      },
+      "title": "Risks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "formula",
+    "priority_bands",
+    "risks"
+  ],
+  "title": "RiskAnalysis",
+  "type": "object",
+  "$id": "qa_risk/1"
+}

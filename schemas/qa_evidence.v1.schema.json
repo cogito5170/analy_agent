@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "title": "Claim",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "pipeline",
+            "user"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "strength": {
+          "enum": [
+            "strong",
+            "moderate",
+            "weak",
+            "unsupported"
+          ],
+          "title": "Strength",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim",
+        "origin",
+        "evidence",
+        "strength"
+      ],
+      "title": "Claim",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "qa_evidence/1",
+      "default": "qa_evidence/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "measured_metrics": {
+      "additionalProperties": true,
+      "title": "Measured Metrics",
+      "type": "object"
+    }
+  },
+  "required": [
+    "claims",
+    "measured_metrics"
+  ],
+  "title": "EvidenceAnalysis",
+  "type": "object",
+  "$id": "qa_evidence/1"
+}

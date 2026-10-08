@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+runs/
+patch*.py
+patch*.txt
+patch_model.mjs
+trip_optimizer/engine/CMakeLists.txt.orig
+trip_optimizer/engine/tests/v4_reference.json
+trip_optimizer/site/

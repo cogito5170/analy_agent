@@ -1,0 +1,99 @@
+{
+  "test_case": {
+    "id": "TC-SEARCH-002",
+    "req_id": "REQ-005",
+    "title": "상품 검색 유효한 입력으로 요청",
+    "technique": "happy_path",
+    "also_covers": [],
+    "priority": "P3",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "GET",
+        "path": "/api/products",
+        "body": null,
+        "query": {
+          "q": "shoes"
+        },
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [
+            "results"
+          ],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 200 및 성공 응답 본문",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-SEARCH-002",
+    "req_id": "REQ-005",
+    "status": "passed",
+    "expected": "status 200 및 성공 응답 본문",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "GET",
+          "path": "/api/products",
+          "query": {
+            "q": "shoes"
+          },
+          "body": null,
+          "headers": {}
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "results": [
+              "red shoes",
+              "blue shoes"
+            ]
+          }
+        },
+        "error": null,
+        "elapsed_ms": 601.4,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body_has.results",
+            "expected": "present",
+            "actual": "present",
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-SEARCH-002.json"
+    ],
+    "duration_ms": 602.4,
+    "attempt": 1,
+    "note": null
+  }
+}

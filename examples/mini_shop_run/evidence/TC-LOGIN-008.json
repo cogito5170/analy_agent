@@ -1,0 +1,90 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-008",
+    "req_id": "REQ-001",
+    "title": "로그인 'password'에 잘못된 타입의 값",
+    "technique": "equivalence_partitioning",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": "password",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "alice@example.com",
+          "password": 12345
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 400,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 400",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-008",
+    "req_id": "REQ-001",
+    "status": "passed",
+    "expected": "status 400",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "alice@example.com",
+            "password": 12345
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 400,
+          "body": {
+            "error": "invalid password"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.2,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 400,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 400,
+            "actual": 400,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-008.json"
+    ],
+    "duration_ms": 2.5,
+    "attempt": 1,
+    "note": null
+  }
+}

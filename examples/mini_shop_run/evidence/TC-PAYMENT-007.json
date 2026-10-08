@@ -1,0 +1,99 @@
+{
+  "test_case": {
+    "id": "TC-PAYMENT-007",
+    "req_id": "REQ-003",
+    "title": "결제 'amount' 최솟값(1)",
+    "technique": "boundary_value",
+    "also_covers": [],
+    "priority": "P0",
+    "focus": "amount",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/payments",
+        "body": {
+          "amount": 1
+        },
+        "query": null,
+        "headers": {},
+        "auth": true,
+        "repeat": 1,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [
+            "payment_id"
+          ],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 200",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-PAYMENT-007",
+    "req_id": "REQ-003",
+    "status": "passed",
+    "expected": "status 200",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/payments",
+          "query": null,
+          "body": {
+            "amount": 1
+          },
+          "headers": {
+            "Authorization": "<redacted>"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "payment_id": "fafc8e7e6433",
+            "amount": 1
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.5,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body_has.payment_id",
+            "expected": "present",
+            "actual": "present",
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-PAYMENT-007.json"
+    ],
+    "duration_ms": 4.8,
+    "attempt": 1,
+    "note": null
+  }
+}

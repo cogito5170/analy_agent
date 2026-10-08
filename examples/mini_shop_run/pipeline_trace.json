@@ -1,0 +1,95 @@
+{
+  "phase": 3,
+  "stages": [
+    {
+      "agent": "Requirement Analyst",
+      "consumes": [],
+      "produces": "qa_requirement/1",
+      "file": "01_requirement.json",
+      "duration_ms": 1.4
+    },
+    {
+      "agent": "Risk Analyst",
+      "consumes": [
+        "qa_requirement/1"
+      ],
+      "produces": "qa_risk/1",
+      "file": "02_risk.json",
+      "duration_ms": 0.7
+    },
+    {
+      "agent": "Test Designer",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_risk/1"
+      ],
+      "produces": "qa_test_plan/1",
+      "file": "03_test_plan.json",
+      "duration_ms": 7.9
+    },
+    {
+      "agent": "Test Executor",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_test_plan/1"
+      ],
+      "produces": "qa_observation/1",
+      "file": "04_observation.json",
+      "duration_ms": 735.6
+    },
+    {
+      "agent": "Defect Analyst",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_risk/1",
+        "qa_test_plan/1",
+        "qa_observation/1"
+      ],
+      "produces": "qa_defect/1",
+      "file": "05_defect.json",
+      "duration_ms": 633.1
+    },
+    {
+      "agent": "QA Reviewer",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_risk/1",
+        "qa_test_plan/1",
+        "qa_observation/1",
+        "qa_defect/1"
+      ],
+      "produces": "qa_review/1",
+      "file": "06_review.json",
+      "duration_ms": 1.2
+    },
+    {
+      "agent": "Evidence Analyst",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_risk/1",
+        "qa_test_plan/1",
+        "qa_observation/1",
+        "qa_defect/1",
+        "qa_review/1"
+      ],
+      "produces": "qa_evidence/1",
+      "file": "07_evidence.json",
+      "duration_ms": 2.4
+    },
+    {
+      "agent": "Portfolio Architect",
+      "consumes": [
+        "qa_requirement/1",
+        "qa_risk/1",
+        "qa_test_plan/1",
+        "qa_observation/1",
+        "qa_defect/1",
+        "qa_review/1",
+        "qa_evidence/1"
+      ],
+      "produces": "qa_portfolio/1",
+      "file": "08_portfolio.json",
+      "duration_ms": 1.0
+    }
+  ]
+}

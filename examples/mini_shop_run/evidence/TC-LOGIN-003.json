@@ -1,0 +1,90 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-003",
+    "req_id": "REQ-001",
+    "title": "로그인 존재하지 않는 이메일",
+    "technique": "negative",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": "email",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "nobody@example.com",
+          "password": "Correct#Pass1"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 401,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 401",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-003",
+    "req_id": "REQ-001",
+    "status": "passed",
+    "expected": "status 401",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "nobody@example.com",
+            "password": "Correct#Pass1"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 401,
+          "body": {
+            "error": "invalid credentials"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.2,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 401,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 401,
+            "actual": 401,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-003.json"
+    ],
+    "duration_ms": 2.2,
+    "attempt": 1,
+    "note": null
+  }
+}

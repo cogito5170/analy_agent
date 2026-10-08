@@ -1,0 +1,117 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-001",
+    "req_id": "REQ-002",
+    "title": "로그인 5회 실패 후 잠금 상태 전이",
+    "technique": "state_transition",
+    "also_covers": [],
+    "priority": "P1",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "locktest@example.com",
+          "password": "Wrong#Pass99"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 5,
+        "expect": {
+          "status": null,
+          "status_in": null,
+          "status_not_in": [
+            200
+          ],
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "locktest@example.com",
+          "password": "Wrong#Pass99"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 423,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "5회 실패까지는 거부, 이후 status 423",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-001",
+    "req_id": "REQ-002",
+    "status": "failed",
+    "expected": "no_5xx = status < 500",
+    "actual": "no_5xx = 500 at step 1",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "locktest@example.com",
+            "password": "Wrong#Pass99"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 500,
+          "body": {
+            "error": "Internal Server Error",
+            "trace": "KeyError: 'last_login'"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.1,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 500,
+            "passed": false
+          },
+          {
+            "type": "status_not_in",
+            "expected": [
+              200
+            ],
+            "actual": 500,
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-001.json"
+    ],
+    "duration_ms": 2.0,
+    "attempt": 1,
+    "note": null
+  }
+}

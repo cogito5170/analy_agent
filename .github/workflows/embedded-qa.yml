@@ -1,0 +1,53 @@
+name: embedded-qa
+
+on:
+  push:
+    paths: ["embedded_qa_portfolio/**", ".github/workflows/embedded-qa.yml"]
+  pull_request:
+    paths: ["embedded_qa_portfolio/**", ".github/workflows/embedded-qa.yml"]
+
+defaults:
+  run:
+    working-directory: embedded_qa_portfolio
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Requirement quality check
+        run: python tools/req_check.py
+      - name: DBC consistency check (database vs firmware header)
+        run: python tools/dbc_lint.py can/bms.dbc --header firmware/include/bms.h
+      - name: Test-case tag check (D2 guideline)
+        run: python tools/tc_tag_check.py
+      - name: Tool tests
+        run: python -m unittest discover -s tests -v
+
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the CI container
+        run: docker build -t bms-ci ci
+      - name: Build, test, coverage, ARM cross-build, reproducibility
+        run: >
+          docker run --rm -e GITHUB_SHA
+          -v "$GITHUB_WORKSPACE":/work -w /work/embedded_qa_portfolio
+          bms-ci bash ci/pipeline.sh build/ci
+      - name: Publish summary
+        if: always()
+        run: cat build/ci/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firmware-pipeline
+          path: |
+            embedded_qa_portfolio/build/ci/metrics.json
+            embedded_qa_portfolio/build/ci/summary.md
+            embedded_qa_portfolio/build/ci/*.log
+            embedded_qa_portfolio/build/ci/*.txt

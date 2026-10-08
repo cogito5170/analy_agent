@@ -1,0 +1,154 @@
+name: trip_optimizer engine CI
+
+on:
+  push:
+    paths:
+      - 'trip_optimizer/**'
+      - '.github/workflows/engine.yml'
+  pull_request:
+    paths:
+      - 'trip_optimizer/**'
+      - '.github/workflows/engine.yml'
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure CMake
+        run: |
+          cd trip_optimizer/engine
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror"
+      
+      - name: Build
+        run: |
+          cmake --build trip_optimizer/engine/build -j2
+          
+      - name: Test
+        run: |
+          cd trip_optimizer/engine/build
+          ctest --output-on-failure
+          
+      - name: Generate V4 reference
+        run: |
+          cd trip_optimizer/engine/build
+          ./v4_gen > ../tests/v4_reference.json
+          
+      - name: Upload V4 reference
+        uses: actions/upload-artifact@v7
+        with:
+          name: v4-reference
+          path: trip_optimizer/engine/tests/v4_reference.json
+          retention-days: 1
+
+  web:
+    runs-on: ubuntu-latest
+    needs: engine
+    steps:
+      - uses: actions/checkout@v7
+      
+      - name: Download V4 reference
+        uses: actions/download-artifact@v8
+        with:
+          name: v4-reference
+          path: trip_optimizer/engine/tests
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Build WASM
+        run: |
+          cd trip_optimizer/engine
+          cmake -B build_wasm -S . -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror"
+          cmake --build build_wasm -j2
+          
+      - name: Run V4 Check
+        run: |
+          node trip_optimizer/engine/tests/v4_check.mjs
+          
+      - name: Run Web Tests
+        run: |
+          cd trip_optimizer/web
+          node --test tests/model.test.mjs
+          node --test tests/wasm.test.mjs
+          
+      - name: Assemble Static Site
+        run: |
+          mkdir site
+          cp trip_optimizer/web/index.html site/
+          cp trip_optimizer/web/model.mjs site/
+          cp trip_optimizer/web/worker.mjs site/
+          cp trip_optimizer/engine/build_wasm/engine.mjs site/
+          cp trip_optimizer/engine/build_wasm/engine.wasm site/
+          sed -i "s/UNKNOWN_COMMIT/${GITHUB_SHA}/" site/index.html
+
+      - name: Install Playwright and server
+        run: |
+          npm init -y
+          npm install playwright@1.47.2 http-server@14.1.1
+          npx playwright install --with-deps chromium
+          
+      - name: Run Smoke Test
+        run: |
+          npx http-server site -p 8080 &
+          sleep 3
+          export SITE_URL=http://localhost:8080/
+          node trip_optimizer/web/tests/smoke.mjs
+          node trip_optimizer/web/tests/error_test.mjs
+          
+      - name: Upload Screenshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-screenshot
+          path: smoke-screenshot.png
+          retention-days: 1
+      - name: Upload Static Site
+        uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: site
+          retention-days: 1
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: web
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      
+      - name: Download Static Site
+        uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: site
+          
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright@1.47.2
+          npx playwright install --with-deps chromium
+          
+      - name: Run Smoke Test Against Deployed URL
+        run: |
+          export SITE_URL="${{ steps.deployment.outputs.page_url }}"
+          node trip_optimizer/web/tests/smoke.mjs

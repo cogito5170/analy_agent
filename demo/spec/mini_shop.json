@@ -1,0 +1,116 @@
+{
+  "product": "Mini Shop",
+  "base_url": "http://127.0.0.1:8765",
+  "health": {"method": "GET", "path": "/health"},
+  "reset": {"method": "POST", "path": "/__reset"},
+  "auth": {
+    "login": {"method": "POST", "path": "/api/login",
+              "body": {"email": "alice@example.com", "password": "Correct#Pass1"}},
+    "token_key": "token",
+    "header": "Authorization",
+    "scheme": "Bearer"
+  },
+  "features": [
+    {
+      "id": "login",
+      "name": "로그인",
+      "actor": "user",
+      "description": "사용자는 이메일과 비밀번호로 로그인한다.",
+      "expected_result": "대시보드로 이동한다.",
+      "priority": "high",
+      "endpoint": {"method": "POST", "path": "/api/login"},
+      "inputs": [
+        {"name": "email", "type": "email", "required": true, "max_length": 254},
+        {"name": "password", "type": "string", "required": true, "min_length": 8, "max_length": 64}
+      ],
+      "valid_example": {"email": "alice@example.com", "password": "Correct#Pass1"},
+      "success": {"status": 200, "body": {"redirect": "/dashboard"}},
+      "errors": [
+        {"when": "validation", "status": 400, "description": "입력 형식 오류"},
+        {"when": "unknown_user", "status": 401, "description": "존재하지 않는 이메일",
+         "input": {"email": "nobody@example.com"}},
+        {"when": "wrong_password", "status": 401, "description": "잘못된 비밀번호",
+         "input": {"password": "Wrong#Pass99"}}
+      ],
+      "rules": [
+        {"kind": "threshold_lock", "description": "비밀번호 5회 연속 실패 시 계정을 잠근다.",
+         "threshold": 5, "status": 423,
+         "input": {"email": "locktest@example.com", "password": "Wrong#Pass99"}}
+      ],
+      "business": {"users": "all", "security": true, "money": false,
+                   "complexity": "medium", "change_frequency": "medium", "observable": true}
+    },
+    {
+      "id": "payment",
+      "name": "결제",
+      "actor": "logged-in user",
+      "description": "로그인한 사용자는 금액을 지정해 결제한다.",
+      "expected_result": "결제 ID가 발급된다.",
+      "priority": "high",
+      "endpoint": {"method": "POST", "path": "/api/payments"},
+      "requires_auth": true,
+      "inputs": [
+        {"name": "amount", "type": "integer", "required": true, "minimum": 1, "maximum": 1000000}
+      ],
+      "valid_example": {"amount": 15000},
+      "success": {"status": 200, "body_keys": ["payment_id"]},
+      "errors": [
+        {"when": "validation", "status": 400, "description": "금액 범위 오류"},
+        {"when": "unauthenticated", "status": 401, "description": "인증 없이 결제 시도"}
+      ],
+      "rules": [
+        {"kind": "idempotent", "description": "같은 Idempotency-Key로 재시도하면 한 번만 결제된다.",
+         "header": "Idempotency-Key", "key": "payment_id"}
+      ],
+      "business": {"users": "paying", "security": true, "money": true,
+                   "complexity": "high", "change_frequency": "high", "observable": false}
+    },
+    {
+      "id": "search",
+      "name": "상품 검색",
+      "actor": "visitor",
+      "description": "방문자는 키워드로 상품을 검색한다. 검색 결과는 빠르게 표시되어야 한다.",
+      "expected_result": "키워드를 포함한 상품 목록이 표시된다.",
+      "priority": "medium",
+      "endpoint": {"method": "GET", "path": "/api/products"},
+      "inputs": [
+        {"name": "q", "type": "string", "location": "query", "required": true, "min_length": 1, "max_length": 50}
+      ],
+      "valid_example": {"q": "shoes"},
+      "success": {"status": 200, "body_keys": ["results"]},
+      "errors": [
+        {"when": "validation", "status": 400, "description": "검색어 형식 오류"}
+      ],
+      "non_functional": {"performance": "검색 결과는 빠르게 표시되어야 한다."},
+      "business": {"users": "all", "security": false, "money": false,
+                   "complexity": "low", "change_frequency": "medium", "observable": true}
+    },
+    {
+      "id": "profile",
+      "name": "내 정보 조회",
+      "actor": "logged-in user",
+      "description": "로그인한 사용자는 자신의 정보를 조회한다.",
+      "expected_result": "자신의 이메일이 표시된다.",
+      "priority": "low",
+      "endpoint": {"method": "GET", "path": "/api/me"},
+      "requires_auth": true,
+      "inputs": [],
+      "valid_example": {},
+      "success": {"status": 200, "body": {"email": "alice@example.com"}},
+      "errors": [
+        {"when": "unauthenticated", "status": 401, "description": "인증 없이 조회"}
+      ],
+      "business": {"users": "all", "security": true, "money": false,
+                   "complexity": "low", "change_frequency": "low", "observable": true}
+    },
+    {
+      "id": "withdraw",
+      "name": "회원 탈퇴",
+      "actor": "logged-in user",
+      "description": "사용자는 적절한 절차를 거쳐 탈퇴할 수 있다.",
+      "priority": "medium",
+      "business": {"users": "all", "security": true, "money": false,
+                   "complexity": "medium", "change_frequency": "low", "observable": false}
+    }
+  ]
+}

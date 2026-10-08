@@ -1,0 +1,561 @@
+{
+  "schema": "qa_requirement/1",
+  "product": "Mini Shop",
+  "base_url": "http://127.0.0.1:8765",
+  "auth": {
+    "login": {
+      "method": "POST",
+      "path": "/api/login",
+      "body": {
+        "email": "alice@example.com",
+        "password": "Correct#Pass1"
+      }
+    },
+    "token_key": "token",
+    "header": "Authorization",
+    "scheme": "Bearer"
+  },
+  "reset": {
+    "method": "POST",
+    "path": "/__reset"
+  },
+  "health": {
+    "method": "GET",
+    "path": "/health"
+  },
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "feature": "login",
+      "feature_name": "로그인",
+      "type": "functional",
+      "actor": "user",
+      "behavior": "사용자는 이메일과 비밀번호로 로그인한다.",
+      "expected_result": "대시보드로 이동한다.",
+      "priority": "high",
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/login"
+      },
+      "requires_auth": false,
+      "inputs": [
+        {
+          "name": "email",
+          "type": "email",
+          "location": "body",
+          "required": true,
+          "min_length": null,
+          "max_length": 254,
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "location": "body",
+          "required": true,
+          "min_length": 8,
+          "max_length": 64,
+          "minimum": null,
+          "maximum": null
+        }
+      ],
+      "valid_example": {
+        "email": "alice@example.com",
+        "password": "Correct#Pass1"
+      },
+      "success_status": 200,
+      "success_body": {
+        "redirect": "/dashboard"
+      },
+      "success_keys": [],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "입력 형식 오류"
+        },
+        {
+          "when": "unknown_user",
+          "status": 401,
+          "input": {
+            "email": "nobody@example.com"
+          },
+          "description": "존재하지 않는 이메일"
+        },
+        {
+          "when": "wrong_password",
+          "status": 401,
+          "input": {
+            "password": "Wrong#Pass99"
+          },
+          "description": "잘못된 비밀번호"
+        }
+      ],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": null,
+      "business": {
+        "users": "all",
+        "security": true,
+        "money": false,
+        "complexity": "medium",
+        "change_frequency": "medium",
+        "observable": true
+      },
+      "testable": true,
+      "source_ref": "features[login]"
+    },
+    {
+      "id": "REQ-002",
+      "feature": "login",
+      "feature_name": "로그인",
+      "type": "business_rule",
+      "actor": "user",
+      "behavior": "비밀번호 5회 연속 실패 시 계정을 잠근다.",
+      "expected_result": "비밀번호 5회 연속 실패 시 계정을 잠근다.",
+      "priority": "high",
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/login"
+      },
+      "requires_auth": false,
+      "inputs": [
+        {
+          "name": "email",
+          "type": "email",
+          "location": "body",
+          "required": true,
+          "min_length": null,
+          "max_length": 254,
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "location": "body",
+          "required": true,
+          "min_length": 8,
+          "max_length": 64,
+          "minimum": null,
+          "maximum": null
+        }
+      ],
+      "valid_example": {
+        "email": "alice@example.com",
+        "password": "Correct#Pass1"
+      },
+      "success_status": 200,
+      "success_body": {
+        "redirect": "/dashboard"
+      },
+      "success_keys": [],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "입력 형식 오류"
+        },
+        {
+          "when": "unknown_user",
+          "status": 401,
+          "input": {
+            "email": "nobody@example.com"
+          },
+          "description": "존재하지 않는 이메일"
+        },
+        {
+          "when": "wrong_password",
+          "status": 401,
+          "input": {
+            "password": "Wrong#Pass99"
+          },
+          "description": "잘못된 비밀번호"
+        }
+      ],
+      "rule": {
+        "kind": "threshold_lock",
+        "description": "비밀번호 5회 연속 실패 시 계정을 잠근다.",
+        "threshold": 5,
+        "status": 423,
+        "input": {
+          "email": "locktest@example.com",
+          "password": "Wrong#Pass99"
+        },
+        "header": null,
+        "key": null
+      },
+      "max_response_ms": null,
+      "parent": "REQ-001",
+      "business": {
+        "users": "all",
+        "security": true,
+        "money": false,
+        "complexity": "medium",
+        "change_frequency": "medium",
+        "observable": true
+      },
+      "testable": true,
+      "source_ref": "features[login].rules[0]"
+    },
+    {
+      "id": "REQ-003",
+      "feature": "payment",
+      "feature_name": "결제",
+      "type": "functional",
+      "actor": "logged-in user",
+      "behavior": "로그인한 사용자는 금액을 지정해 결제한다.",
+      "expected_result": "결제 ID가 발급된다.",
+      "priority": "high",
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/payments"
+      },
+      "requires_auth": true,
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "integer",
+          "location": "body",
+          "required": true,
+          "min_length": null,
+          "max_length": null,
+          "minimum": 1.0,
+          "maximum": 1000000.0
+        }
+      ],
+      "valid_example": {
+        "amount": 15000
+      },
+      "success_status": 200,
+      "success_body": {},
+      "success_keys": [
+        "payment_id"
+      ],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "금액 범위 오류"
+        },
+        {
+          "when": "unauthenticated",
+          "status": 401,
+          "input": {},
+          "description": "인증 없이 결제 시도"
+        }
+      ],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": null,
+      "business": {
+        "users": "paying",
+        "security": true,
+        "money": true,
+        "complexity": "high",
+        "change_frequency": "high",
+        "observable": false
+      },
+      "testable": true,
+      "source_ref": "features[payment]"
+    },
+    {
+      "id": "REQ-004",
+      "feature": "payment",
+      "feature_name": "결제",
+      "type": "business_rule",
+      "actor": "logged-in user",
+      "behavior": "같은 Idempotency-Key로 재시도하면 한 번만 결제된다.",
+      "expected_result": "같은 Idempotency-Key로 재시도하면 한 번만 결제된다.",
+      "priority": "high",
+      "endpoint": {
+        "method": "POST",
+        "path": "/api/payments"
+      },
+      "requires_auth": true,
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "integer",
+          "location": "body",
+          "required": true,
+          "min_length": null,
+          "max_length": null,
+          "minimum": 1.0,
+          "maximum": 1000000.0
+        }
+      ],
+      "valid_example": {
+        "amount": 15000
+      },
+      "success_status": 200,
+      "success_body": {},
+      "success_keys": [
+        "payment_id"
+      ],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "금액 범위 오류"
+        },
+        {
+          "when": "unauthenticated",
+          "status": 401,
+          "input": {},
+          "description": "인증 없이 결제 시도"
+        }
+      ],
+      "rule": {
+        "kind": "idempotent",
+        "description": "같은 Idempotency-Key로 재시도하면 한 번만 결제된다.",
+        "threshold": null,
+        "status": null,
+        "input": {},
+        "header": "Idempotency-Key",
+        "key": "payment_id"
+      },
+      "max_response_ms": null,
+      "parent": "REQ-003",
+      "business": {
+        "users": "paying",
+        "security": true,
+        "money": true,
+        "complexity": "high",
+        "change_frequency": "high",
+        "observable": false
+      },
+      "testable": true,
+      "source_ref": "features[payment].rules[0]"
+    },
+    {
+      "id": "REQ-005",
+      "feature": "search",
+      "feature_name": "상품 검색",
+      "type": "functional",
+      "actor": "visitor",
+      "behavior": "방문자는 키워드로 상품을 검색한다. 검색 결과는 빠르게 표시되어야 한다.",
+      "expected_result": "키워드를 포함한 상품 목록이 표시된다.",
+      "priority": "medium",
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/products"
+      },
+      "requires_auth": false,
+      "inputs": [
+        {
+          "name": "q",
+          "type": "string",
+          "location": "query",
+          "required": true,
+          "min_length": 1,
+          "max_length": 50,
+          "minimum": null,
+          "maximum": null
+        }
+      ],
+      "valid_example": {
+        "q": "shoes"
+      },
+      "success_status": 200,
+      "success_body": {},
+      "success_keys": [
+        "results"
+      ],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "검색어 형식 오류"
+        }
+      ],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": null,
+      "business": {
+        "users": "all",
+        "security": false,
+        "money": false,
+        "complexity": "low",
+        "change_frequency": "medium",
+        "observable": true
+      },
+      "testable": true,
+      "source_ref": "features[search]"
+    },
+    {
+      "id": "REQ-006",
+      "feature": "search",
+      "feature_name": "상품 검색",
+      "type": "non_functional",
+      "actor": "visitor",
+      "behavior": "검색 결과는 빠르게 표시되어야 한다.",
+      "expected_result": null,
+      "priority": "medium",
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/products"
+      },
+      "requires_auth": false,
+      "inputs": [
+        {
+          "name": "q",
+          "type": "string",
+          "location": "query",
+          "required": true,
+          "min_length": 1,
+          "max_length": 50,
+          "minimum": null,
+          "maximum": null
+        }
+      ],
+      "valid_example": {
+        "q": "shoes"
+      },
+      "success_status": 200,
+      "success_body": {},
+      "success_keys": [
+        "results"
+      ],
+      "errors": [
+        {
+          "when": "validation",
+          "status": 400,
+          "input": {},
+          "description": "검색어 형식 오류"
+        }
+      ],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": "REQ-005",
+      "business": {
+        "users": "all",
+        "security": false,
+        "money": false,
+        "complexity": "low",
+        "change_frequency": "medium",
+        "observable": true
+      },
+      "testable": true,
+      "source_ref": "features[search].non_functional.performance"
+    },
+    {
+      "id": "REQ-007",
+      "feature": "profile",
+      "feature_name": "내 정보 조회",
+      "type": "functional",
+      "actor": "logged-in user",
+      "behavior": "로그인한 사용자는 자신의 정보를 조회한다.",
+      "expected_result": "자신의 이메일이 표시된다.",
+      "priority": "low",
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/me"
+      },
+      "requires_auth": true,
+      "inputs": [],
+      "valid_example": {},
+      "success_status": 200,
+      "success_body": {
+        "email": "alice@example.com"
+      },
+      "success_keys": [],
+      "errors": [
+        {
+          "when": "unauthenticated",
+          "status": 401,
+          "input": {},
+          "description": "인증 없이 조회"
+        }
+      ],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": null,
+      "business": {
+        "users": "all",
+        "security": true,
+        "money": false,
+        "complexity": "low",
+        "change_frequency": "low",
+        "observable": true
+      },
+      "testable": true,
+      "source_ref": "features[profile]"
+    },
+    {
+      "id": "REQ-008",
+      "feature": "withdraw",
+      "feature_name": "회원 탈퇴",
+      "type": "functional",
+      "actor": "logged-in user",
+      "behavior": "사용자는 적절한 절차를 거쳐 탈퇴할 수 있다.",
+      "expected_result": null,
+      "priority": "medium",
+      "endpoint": null,
+      "requires_auth": false,
+      "inputs": [],
+      "valid_example": {},
+      "success_status": null,
+      "success_body": {},
+      "success_keys": [],
+      "errors": [],
+      "rule": null,
+      "max_response_ms": null,
+      "parent": null,
+      "business": {
+        "users": "all",
+        "security": true,
+        "money": false,
+        "complexity": "medium",
+        "change_frequency": "low",
+        "observable": false
+      },
+      "testable": false,
+      "source_ref": "features[withdraw]"
+    }
+  ],
+  "ambiguities": [
+    {
+      "req_id": "REQ-005",
+      "field": "description",
+      "issue": "모호한 표현 '빠르게' — 검증 가능한 기준으로 바꿔야 함",
+      "quote": "방문자는 키워드로 상품을 검색한다. 검색 결과는 빠르게 표시되어야 한다.",
+      "blocking": false
+    },
+    {
+      "req_id": "REQ-006",
+      "field": "non_functional.performance",
+      "issue": "정량 기준이 없어 합격/불합격을 판정할 수 없음 (목표 응답시간 필요)",
+      "quote": "검색 결과는 빠르게 표시되어야 한다.",
+      "blocking": false
+    },
+    {
+      "req_id": "REQ-008",
+      "field": "description",
+      "issue": "모호한 표현 '적절한' — 검증 가능한 기준으로 바꿔야 함",
+      "quote": "사용자는 적절한 절차를 거쳐 탈퇴할 수 있다.",
+      "blocking": false
+    },
+    {
+      "req_id": "REQ-008",
+      "field": "expected_result",
+      "issue": "기대 결과가 정의되지 않아 테스트 오라클을 만들 수 없음",
+      "quote": "",
+      "blocking": true
+    }
+  ],
+  "missing_requirements": [
+    {
+      "req_id": "REQ-008",
+      "category": "interface",
+      "description": "관찰 가능한 인터페이스(API/화면)가 정의되지 않음"
+    }
+  ],
+  "testable": false
+}

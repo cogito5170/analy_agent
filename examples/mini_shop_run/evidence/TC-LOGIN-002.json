@@ -1,0 +1,101 @@
+{
+  "test_case": {
+    "id": "TC-LOGIN-002",
+    "req_id": "REQ-001",
+    "title": "로그인 유효한 입력으로 요청",
+    "technique": "happy_path",
+    "also_covers": [
+      "decision_table"
+    ],
+    "priority": "P1",
+    "focus": null,
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "body": {
+          "email": "alice@example.com",
+          "password": "Correct#Pass1"
+        },
+        "query": null,
+        "headers": {},
+        "auth": false,
+        "repeat": 1,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {
+            "redirect": "/dashboard"
+          },
+          "body_has_keys": [],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "status 200 및 성공 응답 본문",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-LOGIN-002",
+    "req_id": "REQ-001",
+    "status": "passed",
+    "expected": "status 200 및 성공 응답 본문",
+    "actual": "기대대로 동작",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "query": null,
+          "body": {
+            "email": "alice@example.com",
+            "password": "Correct#Pass1"
+          },
+          "headers": {}
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "token": "75eea3706bcd47acbbbc77dd39f1dd43",
+            "redirect": "/dashboard"
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.1,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body.redirect",
+            "expected": "/dashboard",
+            "actual": "/dashboard",
+            "passed": true
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-LOGIN-002.json"
+    ],
+    "duration_ms": 2.5,
+    "attempt": 1,
+    "note": null
+  }
+}

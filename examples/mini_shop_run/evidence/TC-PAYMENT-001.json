@@ -1,0 +1,178 @@
+{
+  "test_case": {
+    "id": "TC-PAYMENT-001",
+    "req_id": "REQ-004",
+    "title": "결제 같은 Idempotency-Key로 재시도",
+    "technique": "state_transition",
+    "also_covers": [],
+    "priority": "P0",
+    "focus": "Idempotency-Key",
+    "automated": true,
+    "steps": [
+      {
+        "method": "POST",
+        "path": "/api/payments",
+        "body": {
+          "amount": 15000
+        },
+        "query": null,
+        "headers": {
+          "Idempotency-Key": "qa-req-004-key"
+        },
+        "auth": true,
+        "repeat": 1,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [
+            "payment_id"
+          ],
+          "max_elapsed_ms": null,
+          "same_as_previous": null,
+          "allow_5xx": false
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/payments",
+        "body": {
+          "amount": 15000
+        },
+        "query": null,
+        "headers": {
+          "Idempotency-Key": "qa-req-004-key"
+        },
+        "auth": true,
+        "repeat": 1,
+        "expect": {
+          "status": 200,
+          "status_in": null,
+          "status_not_in": null,
+          "body_contains": {},
+          "body_has_keys": [
+            "payment_id"
+          ],
+          "max_elapsed_ms": null,
+          "same_as_previous": "payment_id",
+          "allow_5xx": false
+        }
+      }
+    ],
+    "charter": null,
+    "oracle": "두 응답의 'payment_id'가 같아야 함 (중복 처리 없음)",
+    "assumption": null
+  },
+  "observation": {
+    "test_id": "TC-PAYMENT-001",
+    "req_id": "REQ-004",
+    "status": "failed",
+    "expected": "same_as_previous.payment_id = e1f2d33c2054",
+    "actual": "same_as_previous.payment_id = d54fed014620 at step 2",
+    "step_results": [
+      {
+        "step": 0,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/payments",
+          "query": null,
+          "body": {
+            "amount": 15000
+          },
+          "headers": {
+            "Idempotency-Key": "qa-req-004-key",
+            "Authorization": "<redacted>"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "payment_id": "e1f2d33c2054",
+            "amount": 15000
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.3,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body_has.payment_id",
+            "expected": "present",
+            "actual": "present",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "step": 1,
+        "iteration": 0,
+        "request": {
+          "method": "POST",
+          "path": "/api/payments",
+          "query": null,
+          "body": {
+            "amount": 15000
+          },
+          "headers": {
+            "Idempotency-Key": "qa-req-004-key",
+            "Authorization": "<redacted>"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "payment_id": "d54fed014620",
+            "amount": 15000
+          }
+        },
+        "error": null,
+        "elapsed_ms": 1.2,
+        "assertions": [
+          {
+            "type": "no_5xx",
+            "expected": "status < 500",
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "status",
+            "expected": 200,
+            "actual": 200,
+            "passed": true
+          },
+          {
+            "type": "body_has.payment_id",
+            "expected": "present",
+            "actual": "present",
+            "passed": true
+          },
+          {
+            "type": "same_as_previous.payment_id",
+            "expected": "e1f2d33c2054",
+            "actual": "d54fed014620",
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      "evidence/TC-PAYMENT-001.json"
+    ],
+    "duration_ms": 5.7,
+    "attempt": 1,
+    "note": null
+  }
+}

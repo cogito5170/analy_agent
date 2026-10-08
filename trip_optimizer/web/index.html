@@ -51,54 +51,20 @@ Fukuoka,1,2</textarea>
     </footer>
 
     <script type="module">
-        import { parseData, decodePlans } from './model.mjs';
+        import { parseData, getExampleData } from './model.mjs';
 
         // Example dataset generation
         document.getElementById('btnExample').addEventListener('click', () => {
             document.getElementById('exampleNote').style.display = 'block';
             
-            document.getElementById('startCity').value = 'Seoul';
-            document.getElementById('endCity').value = 'Seoul';
-            document.getElementById('startDate').value = '2027-04-01';
-            document.getElementById('days').value = '14';
-            
-            document.getElementById('visitLines').value = "Tokyo,2,3\nOsaka,1,2\nKyoto,2,3\nFukuoka,1,2";
-            
-            const cities = ['Seoul', 'Tokyo', 'Osaka', 'Kyoto', 'Fukuoka'];
-            let trans = "";
-            let lodg = "";
-            
-            // roughly 2 weeks: 2027-04-01 to 2027-04-14
-            for (let d = 0; d < 14; d++) {
-                const dateStr = `2027-04-${(d+1).toString().padStart(2, '0')}`;
-                
-                for (const c of cities) {
-                    if (c !== 'Seoul') {
-                        lodg += `${c},${dateStr},${50000 + (c.length * 10000)}\n`;
-                    }
-                }
-                
-                for (let i = 0; i < cities.length; i++) {
-                    for (let j = 0; j < cities.length; j++) {
-                        if (i === j) continue;
-                        const c1 = cities[i];
-                        const c2 = cities[j];
-                        
-                        // Mode 1: Flight (expensive, fast)
-                        // Mode 2: Train (cheap, slow) - let's just make it simple
-                        
-                        // Only add flights involving Seoul, and trains in Japan
-                        if (c1 === 'Seoul' || c2 === 'Seoul') {
-                            trans += `${c1},${c2},${dateStr},Flight,${200000 + (d * 5000)},120\n`;
-                        } else {
-                            trans += `${c1},${c2},${dateStr},Train,${10000 + (d * 1000)},60\n`;
-                            trans += `${c1},${c2},${dateStr},Bus,${5000},180\n`; // 2 modes
-                        }
-                    }
-                }
-            }
-            document.getElementById('transportLines').value = trans;
-            document.getElementById('lodgingLines').value = lodg;
+            const data = getExampleData();
+            document.getElementById('startCity').value = data.startCity;
+            document.getElementById('endCity').value = data.endCity;
+            document.getElementById('startDate').value = data.startDate;
+            document.getElementById('days').value = data.days;
+            document.getElementById('visitLines').value = data.visitLines;
+            document.getElementById('transportLines').value = data.transportLines;
+            document.getElementById('lodgingLines').value = data.lodgingLines;
         });
 
         const worker = new Worker('worker.mjs', { type: 'module' });
@@ -166,7 +132,7 @@ Fukuoka,1,2</textarea>
                     return;
                 }
                 
-                const plans = decodePlans(res.outArray, res.numPlans, 5, parsed.V, parsed.nodeToCity, parsed.modeIdxToName, parsed.startDate);
+                const plans = res.plans;
                 
                 plans.forEach((plan, i) => {
                     const div = document.createElement('div');

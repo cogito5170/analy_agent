@@ -74,6 +74,7 @@ jobs:
         run: |
           cd trip_optimizer/web
           node --test tests/model.test.mjs
+          node --test tests/wasm.test.mjs
           
       - name: Assemble Static Site
         run: |
@@ -85,6 +86,25 @@ jobs:
           cp trip_optimizer/engine/build_wasm/engine.wasm site/
           sed -i "s/UNKNOWN_COMMIT/${GITHUB_SHA}/" site/index.html
 
+      - name: Install Playwright and server
+        run: |
+          npm init -y
+          npm install playwright@1.47.2 http-server
+          npx playwright install --with-deps chromium
+          
+      - name: Run Smoke Test
+        run: |
+          npx http-server site -p 8080 &
+          sleep 3
+          export SITE_URL=http://localhost:8080/
+          node trip_optimizer/web/tests/smoke.mjs
+          
+      - name: Upload Screenshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-screenshot
+          path: smoke-screenshot.png
+          retention-days: 1
       - name: Upload Static Site
         uses: actions/upload-artifact@v7
         with:

@@ -6,6 +6,8 @@
 #include "bms.h"
 #include "unity.h"
 
+#include <string.h>
+
 static bms_t bms;
 static bms_inputs_t in;
 static bms_outputs_t out;
@@ -13,6 +15,7 @@ static bms_outputs_t out;
 void setUp(void)
 {
     bms_init(&bms);
+    (void)memset(&out, 0, sizeof(out)); /* no output may leak from a previous test */
     for (int i = 0; i < BMS_NUM_CELLS; i++) {
         in.cell_mv[i] = 3700;
     }
@@ -35,10 +38,10 @@ static void step_n(int n)
 static void test_init_reaches_standby_within_deadline(void)
 {
     int steps = 0;
-    while (out.state != BMS_STATE_STANDBY && steps * BMS_TASK_PERIOD_MS < BMS_INIT_DEADLINE_MS) {
+    do { /* step at least once so the verdict always comes from the firmware */
         bms_step(&bms, &in, &out);
         steps++;
-    }
+    } while (out.state != BMS_STATE_STANDBY && steps * BMS_TASK_PERIOD_MS < BMS_INIT_DEADLINE_MS);
     TEST_ASSERT_EQUAL(BMS_STATE_STANDBY, out.state);
     TEST_ASSERT_LESS_OR_EQUAL(BMS_INIT_DEADLINE_MS, steps * BMS_TASK_PERIOD_MS);
     TEST_ASSERT_FALSE(out.contactor_close);

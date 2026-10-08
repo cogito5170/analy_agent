@@ -116,6 +116,20 @@ test('F6 Share link: encode then decode gives the same input', () => {
     assert.deepStrictEqual(decoded, input);
 });
 
+test('F6 Share link: legacy costPerMinute link decodes to costPerHour', () => {
+    const legacyInput = {
+        startCity: 'Seoul', endCity: 'Tokyo',
+        visitLines: 'Osaka,1,2',
+        transportLines: 'Seoul,Osaka,2027-04-01,Flight,10,10',
+        lodgingLines: 'Osaka,2027-04-01,5000',
+        startDate: '2027-04-01', days: 5, costPerMinute: 200, k: 5
+    };
+    const hash = encodeState(legacyInput);
+    const decoded = decodeState(hash);
+    assert.strictEqual(decoded.costPerHour, 12000); // 200 * 60
+    assert.strictEqual(decoded.costPerMinute, 200); // the property might still exist, or we check costPerHour
+});
+
 test('F3 Value mode: hour-to-minute rounding', () => {
     const res = parseData({
         startCity: 'Seoul', endCity: 'Tokyo',

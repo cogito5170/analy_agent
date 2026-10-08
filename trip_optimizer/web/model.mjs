@@ -342,7 +342,13 @@ export function encodeState(state) {
 export function decodeState(hash) {
     if (!hash || hash.length < 2) return null;
     try {
-        return JSON.parse(decodeURIComponent(atob(hash.startsWith('#') ? hash.substring(1) : hash)));
+        const obj = JSON.parse(decodeURIComponent(atob(hash.startsWith('#') ? hash.substring(1) : hash)));
+        if (obj && typeof obj === 'object') {
+            if (obj.costPerHour === undefined && obj.costPerMinute !== undefined) {
+                obj.costPerHour = obj.costPerMinute * 60;
+            }
+        }
+        return obj;
     } catch(e) {
         return null;
     }

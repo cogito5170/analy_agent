@@ -81,13 +81,23 @@ Fukuoka,1,2</textarea>
         let pendingReject = null;
         let workerDead = false;
 
+        function showError(msg) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = msg;
+            statusDiv.className = 'error';
+        }
+
         worker.onmessage = (e) => {
             const data = e.data;
             if (data.type === 'ready') {
                 console.log("Worker ready");
                 checkHashAndRun();
             } else if (data.type === 'error') {
-                if (pendingReject) pendingReject(new Error(data.error));
+                if (pendingReject) {
+                    pendingReject(new Error(data.error));
+                } else {
+                    showError(data.error);
+                }
             } else if (data.type === 'success') {
                 if (pendingResolve) pendingResolve(data);
             }
@@ -95,7 +105,12 @@ Fukuoka,1,2</textarea>
         worker.onerror = (e) => {
             console.error("Worker error:", e);
             workerDead = true;
-            if (pendingReject) pendingReject(new Error(e.message || "Worker failed to load"));
+            const msg = e.message || "Worker failed to load";
+            if (pendingReject) {
+                pendingReject(new Error(msg));
+            } else {
+                showError(msg);
+            }
         };
 
         worker.postMessage({ type: 'init' });

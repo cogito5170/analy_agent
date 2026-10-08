@@ -1,0 +1,33 @@
+name: trip_optimizer engine CI
+
+on:
+  push:
+    paths:
+      - 'trip_optimizer/**'
+      - '.github/workflows/engine.yml'
+  pull_request:
+    paths:
+      - 'trip_optimizer/**'
+      - '.github/workflows/engine.yml'
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: |
+          cd trip_optimizer/engine
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror" ..
+      
+      - name: Build
+        run: |
+          cd trip_optimizer/engine/build
+          make
+          
+      - name: Test
+        run: |
+          cd trip_optimizer/engine/build
+          ctest --output-on-failure

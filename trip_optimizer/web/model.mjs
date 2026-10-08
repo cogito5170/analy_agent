@@ -7,8 +7,10 @@ export function parseData({
     startDate, // YYYY-MM-DD
     days,
     k,
-    costPerMinute
+    costPerHour
 }) {
+    const costPerMinute = Math.round((costPerHour || 0) / 60);
+
     // 1. Visit Cities (방문 도시)
     // Format: city,min_stay,max_stay
     function throwError(inputId, lineNum, msg) {

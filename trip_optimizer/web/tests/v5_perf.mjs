@@ -20,7 +20,21 @@ import fs from 'fs';
     await page.goto(siteUrl);
 
     const problemRaw = fs.readFileSync('trip_optimizer/engine/build/v5_problem.json', 'utf8');
-    const problem = JSON.parse(problemRaw);
+    const raw = JSON.parse(problemRaw);
+    const problem = {
+        priceArr: raw.price,
+        minsArr: raw.minutes,
+        lodgingArr: raw.lodging,
+        stayMinArr: raw.stay_min,
+        stayMaxArr: raw.stay_max,
+        V: raw.V,
+        D: raw.D,
+        modes: raw.modes,
+        departMin: raw.depart_min,
+        departMax: raw.depart_max,
+        cpm: raw.cost_per_minute,
+        k: raw.k
+    };
 
     const times = await page.evaluate(async (prob) => {
         return new Promise((resolve, reject) => {
@@ -37,7 +51,7 @@ import fs from 'fs';
                 }
                 
                 if (e.data.type === 'error') {
-                    reject(e.data.payload);
+                    reject(e.data.error || e.data.payload || "Unknown error");
                     return;
                 }
 

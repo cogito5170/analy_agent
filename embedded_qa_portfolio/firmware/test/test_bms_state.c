@@ -211,7 +211,7 @@ static void test_contactor_opens_on_fault_within_deadline(void)
     TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
     TEST_ASSERT_TRUE(out.contactor_close);
     
-    in.cell_mv[0] = 5000;
+    in.cell_mv[0] = 4251;
     step_n(3);
     TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
     TEST_ASSERT_FALSE(out.contactor_close);
@@ -256,6 +256,172 @@ static void test_closed_to_standby_on_req_drop(void)
     TEST_ASSERT_FALSE(out.contactor_close);
 }
 
+
+/* @verifies SWR-015 */
+static void test_swr_015(void)
+{
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    step_n(28); // 290ms total
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    step_n(1); // 300ms total
+    TEST_ASSERT_NOT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+}
+
+// Actually let's calculate CRC in test.
+static uint8_t crc8_j1850(const uint8_t *data, size_t len) {
+    uint8_t crc = 0xFF;
+    for (size_t i = 0; i < len; i++) {
+        crc ^= data[i];
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x80) {
+                crc = (uint8_t)((crc << 1) ^ 0x1D);
+            } else {
+                crc = (uint8_t)(crc << 1);
+            }
+        }
+    }
+    return crc ^ 0xFF;
+}
+
+static void send_vcu_cmd(uint8_t req, uint8_t counter, bool bad_crc) {
+    bms_can_frame_t frame;
+    frame.id = 512;
+    frame.dlc = 3;
+    frame.data[0] = req;
+    frame.data[1] = counter;
+    uint8_t crc = crc8_j1850(frame.data, 2);
+    frame.data[2] = bad_crc ? ~crc : crc;
+    bms_can_rx(&bms, &in, &frame);
+}
+
+/* @verifies SWR-016 SWR-031 */
+static void test_can_vcu_cmd(void)
+{
+    // wrap 15 -> 0 accepted
+    send_vcu_cmd(0, 15, false);
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    send_vcu_cmd(0, 0, false);
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+}
+
+/* @verifies SWR-016 SWR-031 */
+static void test_swr_016_031_skipped_counter(void)
+{
+    send_vcu_cmd(0, 0, false);
+    step_n(1);
+    
+    // 2 bad frames no fault
+    send_vcu_cmd(0, 2, false); // skipped counter 1 -> 2
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    send_vcu_cmd(0, 4, false); // skipped counter 3 -> 4
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    // 3 bad frames fault
+    send_vcu_cmd(0, 6, false); // skipped counter
+    step_n(1);
+    TEST_ASSERT_NOT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+}
+
+/* @verifies SWR-016 SWR-031 */
+static void test_swr_016_031_bad_checksum(void)
+{
+    send_vcu_cmd(0, 0, false);
+    step_n(1);
+    
+    send_vcu_cmd(0, 1, true); // bad checksum
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    send_vcu_cmd(0, 2, true); // bad checksum
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    send_vcu_cmd(0, 3, true); // bad checksum
+    step_n(1);
+    TEST_ASSERT_NOT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+}
+
+/* @verifies SWR-017 */
+static void test_swr_017(void)
+{
+    // BMS_Status every 100 ms
+    step_n(1);
+    bool found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 256) found = true;
+    }
+    TEST_ASSERT_TRUE(found);
+    
+    // not in next step
+    step_n(1);
+    found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 256) found = true;
+    }
+    TEST_ASSERT_FALSE(found);
+    
+    // at 10th step (100ms later)
+    step_n(9);
+    found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 256) found = true;
+    }
+    TEST_ASSERT_TRUE(found);
+}
+
+/* @verifies SWR-018 */
+static void test_swr_018(void)
+{
+    step_n(1);
+    bool cell_found = false, temp_found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 257) cell_found = true;
+        if (out.can_tx[i].id == 258) temp_found = true;
+    }
+    TEST_ASSERT_TRUE(cell_found);
+    TEST_ASSERT_TRUE(temp_found);
+    
+    step_n(10); // Next 100ms
+    cell_found = false; temp_found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 257) cell_found = true;
+        if (out.can_tx[i].id == 258) temp_found = true;
+    }
+    TEST_ASSERT_TRUE(cell_found);
+    TEST_ASSERT_TRUE(temp_found);
+}
+
+/* @verifies SWR-019 */
+static void test_swr_019(void)
+{
+    step_n(10);
+    // Trigger protection fault
+    in.cell_mv[0] = 4251;
+    step_n(3);
+    
+    // Fault triggered. BMS_Fault should be tx'd in this step (within 10ms)
+    bool found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 272) found = true;
+    }
+    TEST_ASSERT_TRUE(found);
+    
+    // 100ms later
+    step_n(10);
+    found = false;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 272) found = true;
+    }
+    TEST_ASSERT_TRUE(found);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -275,5 +441,12 @@ int main(void)
     RUN_TEST(test_fault_ignores_contactor_req);
     RUN_TEST(test_standby_to_closed_on_req);
     RUN_TEST(test_closed_to_standby_on_req_drop);
+    RUN_TEST(test_swr_015);
+    RUN_TEST(test_can_vcu_cmd);
+    RUN_TEST(test_swr_016_031_skipped_counter);
+    RUN_TEST(test_swr_016_031_bad_checksum);
+    RUN_TEST(test_swr_017);
+    RUN_TEST(test_swr_018);
+    RUN_TEST(test_swr_019);
     return UNITY_END();
 }

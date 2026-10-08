@@ -73,6 +73,10 @@ typedef struct {
     uint16_t cellv_timer;
     uint16_t temp_timer;
     uint16_t fault_timer;
+    uint8_t status_msg_counter;
+    uint8_t fault_msg_counter;
+    uint8_t low_current_count;
+    bool contactor_closed;
 } bms_t;
 
 void bms_init(bms_t *bms);

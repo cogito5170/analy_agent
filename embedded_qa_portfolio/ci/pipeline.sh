@@ -51,6 +51,10 @@ coverage() {
   # CMake names coverage files after the full source name (bms.c.gcda), so pass that to gcov.
   (cd "$OUT/host" && gcov -b -o CMakeFiles/bms.dir/src bms.c.gcda) > "$OUT/gcov.txt" \
     && grep -q "Lines executed" "$OUT/gcov.txt"
+  local cov
+  cov=$(grep "Lines executed" "$OUT/gcov.txt" | grep -oP '\d+(\.\d+)?' | head -1)
+  echo "Coverage gate: $cov % >= 80 %"
+  awk -v cov="$cov" 'BEGIN { if (cov < 80.0) { print "Coverage too low"; exit 1 } }'
 }
 
 arm_build() {

@@ -422,6 +422,63 @@ static void test_swr_019(void)
     TEST_ASSERT_TRUE(found);
 }
 
+
+static void test_determinism(void)
+{
+    bms_t bms1, bms2;
+    bms_outputs_t out1, out2;
+    bms_inputs_t in1, in2;
+
+    bms_init(&bms1);
+    bms_init(&bms2);
+    (void)memset(&out1, 0, sizeof(out1));
+    (void)memset(&out2, 0, sizeof(out2));
+    (void)memset(&in1, 0, sizeof(in1));
+    (void)memset(&in2, 0, sizeof(in2));
+
+    for (int i = 0; i < BMS_NUM_CELLS; i++) {
+        in1.cell_mv[i] = 3700;
+        in2.cell_mv[i] = 3700;
+    }
+    for (int i = 0; i < BMS_NUM_TEMPS; i++) {
+        in1.temp_ddegc[i] = 250;
+        in2.temp_ddegc[i] = 250;
+    }
+
+    for (int i = 0; i < 40; i++) {
+        bms_step(&bms1, &in1, &out1);
+        bms_step(&bms2, &in2, &out2);
+        TEST_ASSERT_EQUAL_MEMORY(&out1, &out2, sizeof(bms_outputs_t));
+    }
+}
+
+/* @verifies SWR-030 */
+static void test_swr_030_comm_loss_contactor_handling(void)
+{
+    step_n(15);
+    TEST_ASSERT_EQUAL(BMS_STATE_STANDBY, out.state);
+    
+    in.contactor_req = true;
+    step_n(1);
+    TEST_ASSERT_EQUAL(BMS_STATE_CLOSED, out.state);
+    
+    in.current_ma = 100000;
+    
+    step_n(24);
+    
+    TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
+    TEST_ASSERT_EQUAL(BMS_FAULT_COMM, out.faults);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    
+    in.current_ma = 5000;
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    step_n(1);
+    TEST_ASSERT_FALSE(out.contactor_close);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -449,4 +506,6 @@ int main(void)
     RUN_TEST(test_swr_018);
     RUN_TEST(test_swr_019);
     return UNITY_END();
-}
+}    RUN_TEST(test_determinism);
+    RUN_TEST(test_swr_030_comm_loss_contactor_handling);
+

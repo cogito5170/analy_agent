@@ -176,8 +176,28 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
 
     out->state = bms->state;
     out->faults = bms->faults;
-    /* SWR-011: FAULT ignores ContactorReq */
-    out->contactor_close = (bms->state == BMS_STATE_CLOSED);
+
+    if (bms->state == BMS_STATE_CLOSED) {
+        bms->contactor_closed = true;
+        bms->low_current_count = 0;
+    } else if (bms->state == BMS_STATE_FAULT) {
+        if (bms->faults == BMS_FAULT_COMM && bms->contactor_closed) {
+            if (in->current_ma <= 5000 && in->current_ma >= -5000) {
+                bms->low_current_count++;
+                if (bms->low_current_count >= 3) {
+                    bms->contactor_closed = false;
+                }
+            } else {
+                bms->low_current_count = 0;
+            }
+        } else {
+            bms->contactor_closed = false;
+        }
+    } else {
+        bms->contactor_closed = false;
+    }
+
+    out->contactor_close = bms->contactor_closed;
 
     bms->status_timer = (uint16_t)(bms->status_timer + BMS_TASK_PERIOD_MS);
     if (bms->status_timer >= 100) {
@@ -198,8 +218,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         f->data[4] = (uint8_t)((current_da >> 8) & 0xFF);
         
         f->data[5] = 100; // SOC = 50%
-        static uint8_t status_cnt = 0;
-        f->data[6] = status_cnt++ & 0x0F;
+        f->data[6] = bms->status_msg_counter++ & 0x0F;
     }
     
     bms->cellv_timer = (uint16_t)(bms->cellv_timer + BMS_TASK_PERIOD_MS);
@@ -237,8 +256,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
             f->id = 272;
             f->dlc = 2;
             f->data[0] = bms->faults;
-            static uint8_t fault_cnt = 0;
-            f->data[1] = fault_cnt++ & 0x0F;
+            f->data[1] = bms->fault_msg_counter++ & 0x0F;
         }
     }
 

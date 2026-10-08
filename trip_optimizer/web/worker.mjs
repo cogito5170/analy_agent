@@ -6,11 +6,15 @@ let modPromise = null;
 self.onmessage = async (e) => {
     const data = e.data;
     if (data.type === 'init') {
-        if (!modPromise) {
-            modPromise = Module();
+        try {
+            if (!modPromise) {
+                modPromise = Module();
+            }
+            await modPromise;
+            self.postMessage({ type: 'ready' });
+        } catch (err) {
+            self.postMessage({ type: 'error', error: err.message || String(err) });
         }
-        await modPromise;
-        self.postMessage({ type: 'ready' });
     } else if (data.type === 'optimize') {
         try {
             const mod = await modPromise;

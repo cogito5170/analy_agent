@@ -44,7 +44,6 @@ Fukuoka,1,2</textarea>
     <button id="btnOptimize">Optimize (K=5)</button>
     
     <div id="status"></div>
-    <div id="notices" style="color: #888; font-style: italic;"></div>
     <div id="results"></div>
     
     <footer>
@@ -52,20 +51,54 @@ Fukuoka,1,2</textarea>
     </footer>
 
     <script type="module">
-        import { parseData, getExampleData } from './model.mjs';
+        import { parseData, decodePlans } from './model.mjs';
 
         // Example dataset generation
         document.getElementById('btnExample').addEventListener('click', () => {
             document.getElementById('exampleNote').style.display = 'block';
             
-            const data = getExampleData();
-            document.getElementById('startCity').value = data.startCity;
-            document.getElementById('endCity').value = data.endCity;
-            document.getElementById('startDate').value = data.startDate;
-            document.getElementById('days').value = data.days;
-            document.getElementById('visitLines').value = data.visitLines;
-            document.getElementById('transportLines').value = data.transportLines;
-            document.getElementById('lodgingLines').value = data.lodgingLines;
+            document.getElementById('startCity').value = 'Seoul';
+            document.getElementById('endCity').value = 'Seoul';
+            document.getElementById('startDate').value = '2027-04-01';
+            document.getElementById('days').value = '14';
+            
+            document.getElementById('visitLines').value = "Tokyo,2,3\nOsaka,1,2\nKyoto,2,3\nFukuoka,1,2";
+            
+            const cities = ['Seoul', 'Tokyo', 'Osaka', 'Kyoto', 'Fukuoka'];
+            let trans = "";
+            let lodg = "";
+            
+            // roughly 2 weeks: 2027-04-01 to 2027-04-14
+            for (let d = 0; d < 14; d++) {
+                const dateStr = `2027-04-${(d+1).toString().padStart(2, '0')}`;
+                
+                for (const c of cities) {
+                    if (c !== 'Seoul') {
+                        lodg += `${c},${dateStr},${50000 + (c.length * 10000)}\n`;
+                    }
+                }
+                
+                for (let i = 0; i < cities.length; i++) {
+                    for (let j = 0; j < cities.length; j++) {
+                        if (i === j) continue;
+                        const c1 = cities[i];
+                        const c2 = cities[j];
+                        
+                        // Mode 1: Flight (expensive, fast)
+                        // Mode 2: Train (cheap, slow) - let's just make it simple
+                        
+                        // Only add flights involving Seoul, and trains in Japan
+                        if (c1 === 'Seoul' || c2 === 'Seoul') {
+                            trans += `${c1},${c2},${dateStr},Flight,${200000 + (d * 5000)},120\n`;
+                        } else {
+                            trans += `${c1},${c2},${dateStr},Train,${10000 + (d * 1000)},60\n`;
+                            trans += `${c1},${c2},${dateStr},Bus,${5000},180\n`; // 2 modes
+                        }
+                    }
+                }
+            }
+            document.getElementById('transportLines').value = trans;
+            document.getElementById('lodgingLines').value = lodg;
         });
 
         const worker = new Worker('worker.mjs', { type: 'module' });
@@ -83,35 +116,16 @@ Fukuoka,1,2</textarea>
                 if (pendingResolve) pendingResolve(data);
             }
         };
-        let workerDead = false;
-        worker.onerror = (e) => {
-            console.error("Worker error:", e);
-            workerDead = true;
-            if (pendingReject) pendingReject(new Error(e.message || "Worker failed to load"));
-            else {
-                // Initial load error
-                document.getElementById('status').innerHTML = "Worker failed to load: " + (e.message || "Unknown error");
-                document.getElementById('status').className = 'error';
-            }
-        };
 
         worker.postMessage({ type: 'init' });
 
         document.getElementById('btnOptimize').addEventListener('click', async () => {
             const statusDiv = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
-            const noticesDiv = document.getElementById('notices');
-            
-            if (workerDead) {
-                statusDiv.innerHTML = 'Worker failed to load. Please refresh the page.';
-                statusDiv.className = 'error';
-                return;
-            }
             
             statusDiv.innerHTML = 'Parsing data...';
             statusDiv.className = '';
             resultsDiv.innerHTML = '';
-            noticesDiv.innerHTML = '';
             
             let parsed;
             try {
@@ -132,16 +146,8 @@ Fukuoka,1,2</textarea>
                 return;
             }
             
-            let notices = [];
             if (parsed.skippedLines > 0) {
                 console.warn(`Skipped ${parsed.skippedLines} out-of-window lines`);
-                notices.push(`Skipped ${parsed.skippedLines} out-of-window lines.`);
-            }
-            if (!document.getElementById('lodgingLines').value.trim()) {
-                notices.push('숙박비 미포함');
-            }
-            if (notices.length > 0) {
-                noticesDiv.innerHTML = notices.join('<br>');
             }
             
             statusDiv.innerHTML = 'Optimizing...';
@@ -160,7 +166,7 @@ Fukuoka,1,2</textarea>
                     return;
                 }
                 
-                const plans = res.plans;
+                const plans = decodePlans(res.outArray, res.numPlans, 5, parsed.V, parsed.nodeToCity, parsed.modeIdxToName, parsed.startDate);
                 
                 plans.forEach((plan, i) => {
                     const div = document.createElement('div');

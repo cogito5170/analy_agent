@@ -273,45 +273,57 @@ export function getExampleData() {
 export function callEngine(mod, parsed) {
     const p = parsed;
     
-    const ptrPrice = mod._malloc(p.priceArr.length * 8);
-    const ptrMinutes = mod._malloc(p.minsArr.length * 8);
-    const ptrLodging = mod._malloc(p.lodgingArr.length * 8);
-    const ptrStayMin = mod._malloc(p.stayMinArr.length * 4);
-    const ptrStayMax = mod._malloc(p.stayMaxArr.length * 4);
+    let ptrPrice = 0;
+    let ptrMinutes = 0;
+    let ptrLodging = 0;
+    let ptrStayMin = 0;
+    let ptrStayMax = 0;
+    let ptrOut = 0;
     
-    const out_len = mod._trip_output_size(p.V, p.k);
-    if (out_len <= 0) {
-        mod._free(ptrPrice); mod._free(ptrMinutes); mod._free(ptrLodging); mod._free(ptrStayMin); mod._free(ptrStayMax);
-        throw new Error("Invalid output size");
+    try {
+        ptrPrice = mod._malloc(p.priceArr.length * 8);
+        ptrMinutes = mod._malloc(p.minsArr.length * 8);
+        ptrLodging = mod._malloc(p.lodgingArr.length * 8);
+        ptrStayMin = mod._malloc(p.stayMinArr.length * 4);
+        ptrStayMax = mod._malloc(p.stayMaxArr.length * 4);
+        
+        const out_len = mod._trip_output_size(p.V, p.k);
+        if (out_len <= 0) {
+            throw new Error("Invalid output size");
+        }
+        ptrOut = mod._malloc(out_len * 8);
+        
+        mod.HEAPF64.set(p.priceArr, ptrPrice / 8);
+        mod.HEAPF64.set(p.minsArr, ptrMinutes / 8);
+        mod.HEAPF64.set(p.lodgingArr, ptrLodging / 8);
+        mod.HEAP32.set(p.stayMinArr, ptrStayMin / 4);
+        mod.HEAP32.set(p.stayMaxArr, ptrStayMax / 4);
+        mod.HEAPF64.fill(0.0, ptrOut / 8, ptrOut / 8 + out_len);
+        
+        const numPlans = mod._trip_optimize(
+            p.V, p.days, p.M,
+            ptrPrice, ptrMinutes, ptrLodging,
+            ptrStayMin, ptrStayMax,
+            p.departMin, p.departMax, p.costPerMinute,
+            p.k, ptrOut, out_len
+        );
+        
+        if (numPlans < 0) {
+            const errPtr = mod._trip_last_error();
+            const errStr = mod.UTF8ToString(errPtr);
+            throw new Error(errStr);
+        }
+        
+        const outActual = new Float64Array(mod.HEAPF64.subarray(ptrOut / 8, ptrOut / 8 + out_len));
+        const plans = decodePlans(outActual, numPlans, p.k, p.V, p.nodeToCity, p.modeIdxToName, p.startDate);
+        
+        return plans;
+    } finally {
+        if (ptrPrice) mod._free(ptrPrice);
+        if (ptrMinutes) mod._free(ptrMinutes);
+        if (ptrLodging) mod._free(ptrLodging);
+        if (ptrStayMin) mod._free(ptrStayMin);
+        if (ptrStayMax) mod._free(ptrStayMax);
+        if (ptrOut) mod._free(ptrOut);
     }
-    const ptrOut = mod._malloc(out_len * 8);
-    
-    mod.HEAPF64.set(p.priceArr, ptrPrice / 8);
-    mod.HEAPF64.set(p.minsArr, ptrMinutes / 8);
-    mod.HEAPF64.set(p.lodgingArr, ptrLodging / 8);
-    mod.HEAP32.set(p.stayMinArr, ptrStayMin / 4);
-    mod.HEAP32.set(p.stayMaxArr, ptrStayMax / 4);
-    mod.HEAPF64.fill(0.0, ptrOut / 8, ptrOut / 8 + out_len);
-    
-    const numPlans = mod._trip_optimize(
-        p.V, p.days, p.M,
-        ptrPrice, ptrMinutes, ptrLodging,
-        ptrStayMin, ptrStayMax,
-        p.departMin, p.departMax, p.costPerMinute,
-        p.k, ptrOut, out_len
-    );
-    
-    if (numPlans < 0) {
-        const errPtr = mod._trip_last_error();
-        const errStr = mod.UTF8ToString(errPtr);
-        mod._free(ptrPrice); mod._free(ptrMinutes); mod._free(ptrLodging); mod._free(ptrStayMin); mod._free(ptrStayMax); mod._free(ptrOut);
-        throw new Error(errStr);
-    }
-    
-    const outActual = new Float64Array(mod.HEAPF64.subarray(ptrOut / 8, ptrOut / 8 + out_len));
-    const plans = decodePlans(outActual, numPlans, p.k, p.V, p.nodeToCity, p.modeIdxToName, p.startDate);
-    
-    mod._free(ptrPrice); mod._free(ptrMinutes); mod._free(ptrLodging); mod._free(ptrStayMin); mod._free(ptrStayMax); mod._free(ptrOut);
-    
-    return plans;
 }

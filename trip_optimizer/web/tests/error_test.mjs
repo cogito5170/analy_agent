@@ -57,7 +57,7 @@ import { chromium } from 'playwright';
     await page4.click('#btnExample');
     
     // Test non-numeric
-    await page4.fill('#costPerHour', 'abc');
+    await page4.evaluate(() => document.getElementById('costPerHour').value = 'abc');
     await page4.click('#btnOptimize');
     let cphError = await page4.innerText('#costPerHourError');
     if (!cphError.includes('must be a non-negative number')) {

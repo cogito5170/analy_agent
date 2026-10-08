@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <iomanip>
 
 void print_json_array(const std::vector<double>& v) {
     std::cout << "[";
@@ -34,8 +35,8 @@ trip::Problem empty_problem(int visits, int days, int modes) {
 }
 
 trip::Problem random_problem(std::mt19937& rng) {
-    std::uniform_int_distribution<int> visits(1, 4), days(2, 8), modes(1, 2), price(0, 500), minutes(10, 600),
-        lodge(0, 100), stay(0, 2), extra(0, 2), cpm(0, 3), percent(0, 99);
+    std::uniform_int_distribution<int> visits(1, 8), days(2, 30), modes(1, 2), price(0, 500), minutes(10, 600),
+        lodge(0, 100), stay(0, 2), extra(0, 5), cpm(0, 3), percent(0, 99);
     trip::Problem p = empty_problem(visits(rng), days(rng), modes(rng));
     for (size_t i = 0; i < p.price.size(); i++) {
         p.price[i] = percent(rng) < 25 ? -1 : price(rng);
@@ -52,10 +53,11 @@ trip::Problem random_problem(std::mt19937& rng) {
     return p;
 }
 
-void print_problem(const trip::Problem& p, int k, int out_len_override, bool is_last) {
+void print_problem(const trip::Problem& p, int k, int out_len_override, bool is_last, bool fractional_price = false) {
     std::vector<double> price(p.price.begin(), p.price.end());
     std::vector<double> minutes(p.minutes.begin(), p.minutes.end());
     std::vector<double> lodging(p.lodging.begin(), p.lodging.end());
+    if (fractional_price && !price.empty()) price[0] = 10.5;
     
     int req_len = trip_output_size(p.visits, k);
     int actual_len = out_len_override >= 0 ? out_len_override : req_len;
@@ -94,19 +96,19 @@ void print_problem(const trip::Problem& p, int k, int out_len_override, bool is_
 }
 
 int main() {
+    std::cout << std::setprecision(17);
     std::cout << "[\n";
     std::mt19937 rng(99);
     
     // Normal / infeasible random problems
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 1010; i++) {
         trip::Problem p = random_problem(rng);
         print_problem(p, 4, -1, false);
     }
     
     // Edge case: input error (negative price)
     trip::Problem p_err = empty_problem(1, 2, 1);
-    p_err.price[0] = 10.5; // fractional price
-    print_problem(p_err, 1, -1, false);
+    print_problem(p_err, 1, -1, false, true);
     
     // Edge case: buffer too small
     trip::Problem p_buf = empty_problem(1, 2, 1);

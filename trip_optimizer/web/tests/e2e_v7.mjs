@@ -27,7 +27,7 @@ async function runOptimization(page, costPerHour) {
             const h4El = await planEl.$('h4');
             const h4TextFull = await h4El.textContent();
             
-            const totalMatch = h4TextFull.match(/Total:\s*([\d\.]+)\s*won/);
+            const totalMatch = h4TextFull.match(/Total Cost:\s*([\d\.]+)/);
             const totalValue = totalMatch ? parseFloat(totalMatch[1]) : 0;
 
             const uls = await planEl.$$('ul');

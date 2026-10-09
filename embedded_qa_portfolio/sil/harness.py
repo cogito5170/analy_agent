@@ -3,6 +3,17 @@ import os
 import can
 import json
 from pathlib import Path
+
+def crc8_j1850(data):
+    crc = 0xFF
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            if crc & 0x80:
+                crc = ((crc << 1) ^ 0x1D) & 0xFF
+            else:
+                crc = (crc << 1) & 0xFF
+    return crc ^ 0xFF
 from plant.model import DiscretePackModel
 
 # Load the shared library
@@ -37,7 +48,6 @@ class BMS_State(ctypes.Structure):
     _fields_ = [
         ("state", ctypes.c_int32),
         ("faults", ctypes.c_uint8),
-        ("contactor_closed", ctypes.c_bool),
         ("sig_cell_count", ctypes.c_uint8),
         ("sig_temp_count", ctypes.c_uint8),
         ("ov_count", ctypes.c_uint8),
@@ -45,10 +55,10 @@ class BMS_State(ctypes.Structure):
         ("ot_count", ctypes.c_uint8),
         ("utc_count", ctypes.c_uint8),
         ("oc_count", ctypes.c_uint8),
-        ("vcu_cmd_first", ctypes.c_bool),
-        ("vcu_cmd_counter", ctypes.c_uint8),
-        ("vcu_cmd_reject_count", ctypes.c_uint8),
         ("vcu_cmd_timer", ctypes.c_uint16),
+        ("vcu_cmd_reject_count", ctypes.c_uint8),
+        ("vcu_cmd_counter", ctypes.c_uint8),
+        ("vcu_cmd_first", ctypes.c_bool),
         ("status_timer", ctypes.c_uint16),
         ("cellv_timer", ctypes.c_uint16),
         ("temp_timer", ctypes.c_uint16),
@@ -56,6 +66,7 @@ class BMS_State(ctypes.Structure):
         ("status_msg_counter", ctypes.c_uint8),
         ("fault_msg_counter", ctypes.c_uint8),
         ("low_current_count", ctypes.c_uint8),
+        ("contactor_closed", ctypes.c_bool),
     ]
 
 bms_lib.bms_init.argtypes = [ctypes.POINTER(BMS_State)]
@@ -90,6 +101,10 @@ class SILHarness:
         
         # Fault injection queues
         self.faults = []
+        self.vcu_contactor_req = False
+        self.vcu_counter = 0
+        self.delayed_can_frames = []
+
 
     def inject(self, fault_type, at_ms, duration_ms, **kwargs):
         self.faults.append({
@@ -103,11 +118,36 @@ class SILHarness:
     def step_1ms(self):
         # 1. Apply faults for current time
         current = 0.0 # Pack current in Amps
-        contactor_req = self.inputs.contactor_req
         
         # We need a way to track what faults are active
         active_faults = [f for f in self.faults if f["start"] <= self.time_ms < f["end"]]
-        
+
+        # VCU CAN transmission
+        if self.time_ms % 100 == 0:
+            self.vcu_counter = (self.vcu_counter + 1) % 16
+            data0 = 1 if self.vcu_contactor_req else 0
+            data1 = self.vcu_counter
+            crc = crc8_j1850([data0, data1])
+            frame = BMS_CAN_Frame(id=512, dlc=3, data=(ctypes.c_uint8 * 8)(data0, data1, crc, 0, 0, 0, 0, 0))
+            
+            loss = any(f["type"] == "can_loss" for f in active_faults)
+            corrupt = any(f["type"] == "can_corrupt" for f in active_faults)
+            delay = next((f for f in active_faults if f["type"] == "can_delay"), None)
+            
+            if corrupt:
+                frame.data[2] ^= 0xFF
+                
+            if not loss:
+                if delay:
+                    self.delayed_can_frames.append((self.time_ms + delay["params"]["delay_ms"], frame))
+                else:
+                    bms_lib.bms_can_rx(ctypes.byref(self.bms), ctypes.byref(self.inputs), ctypes.byref(frame))
+                    
+        for t, f in self.delayed_can_frames:
+            if self.time_ms == t:
+                bms_lib.bms_can_rx(ctypes.byref(self.bms), ctypes.byref(self.inputs), ctypes.byref(f))
+        self.delayed_can_frames = [(t, f) for t, f in self.delayed_can_frames if self.time_ms < t]
+
         # Reset faults
         for i in range(4):
             self.plant.inject_voltage_stuck(i, None)
@@ -124,33 +164,26 @@ class SILHarness:
                 self.plant.inject_sensor_offset(f["params"]["cell_idx"], f["params"]["offset"])
             elif f["type"] == "temperature_ramp":
                 self.plant.inject_temperature_ramp(f["params"]["cell_idx"], f["params"]["ramp_rate"])
-            elif f["type"] == "can_loss":
-                pass # Handled in rx
 
-        # Plant steps every 10ms (but we call it per 10ms tick, wait, plant step_10ms expects 10ms dt)
         if self.time_ms % 10 == 0:
             self.plant.step_10ms(current)
             
         p_out = self.plant.get_outputs()
         
-        # Map plant to inputs
         for i in range(4):
             self.inputs.cell_mv[i] = int(p_out["cell_voltages"][i] * 1000)
         for i in range(2):
             self.inputs.temp_ddegc[i] = int(p_out["cell_temperatures"][i] * 10)
         self.inputs.current_ma = int(current * 1000)
 
-        # BMS steps every 10ms
         if self.time_ms % 10 == 0:
             bms_lib.bms_step(ctypes.byref(self.bms), ctypes.byref(self.inputs), ctypes.byref(self.outputs))
             
-            # Send TX frames to virtual bus
             for i in range(self.outputs.can_tx_count):
                 f = self.outputs.can_tx[i]
                 msg = can.Message(arbitration_id=f.id, data=list(f.data)[:f.dlc], is_extended_id=False)
                 self.bus.send(msg)
 
-        # Record trace
         self.trace.append({
             "time_ms": self.time_ms,
             "state": self.bms.state,

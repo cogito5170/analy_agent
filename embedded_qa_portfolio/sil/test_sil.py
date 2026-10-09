@@ -1,7 +1,7 @@
 import pytest
 import json
 import hashlib
-from sil.harness import SILHarness
+from sil.harness import SILHarness, BMS_State
 from sil.utils import verifies
 
 def run_test(tc_id, duration_ms, faults=None):
@@ -23,9 +23,9 @@ def test_TC_STAT_001():
 def test_TC_STAT_002():
     # STANDBY to CLOSED
     h = SILHarness("TC-STAT-002")
-    h.run(150) # STANDBY
-    h.inputs.contactor_req = True
-    h.run(50)
+    h.run(150)
+    h.vcu_contactor_req = True
+    h.run(60)
     h.save_trace()
     assert h.trace[-1]["state"] == 2 # CLOSED
     assert h.trace[-1]["contactor_close"] == True
@@ -35,10 +35,10 @@ def test_TC_STAT_003():
     # CLOSED to STANDBY
     h = SILHarness("TC-STAT-003")
     h.run(150)
-    h.inputs.contactor_req = True
-    h.run(50)
-    h.inputs.contactor_req = False
-    h.run(50)
+    h.vcu_contactor_req = True
+    h.run(100)
+    h.vcu_contactor_req = False
+    h.run(100)
     h.save_trace()
     assert h.trace[-1]["state"] == 1 # STANDBY
     assert h.trace[-1]["contactor_close"] == False
@@ -68,17 +68,18 @@ def test_TC_PROT_003():
 
 @verifies("SWR-007")
 def test_TC_PROT_004():
-    # OT threshold
-    h = run_test("TC-PROT-004", 200) # Need to mock temp or inject offset
-    # Currently plant doesn't have direct temp inject, but we added temp_ramp_rate in plant?
-    # wait, plant model has no inject_temp_stuck. Let's add it dynamically or use current.
-    # We can inject high current to heat it up, or just bypass.
-    pass
+    h = run_test("TC-PROT-004", 200, [{"fault_type": "temperature_ramp", "at_ms": 0, "duration_ms": 200, "cell_idx": 1, "ramp_rate": 500.0}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x04) != 0
 
 @verifies("SWR-008")
 def test_TC_PROT_005():
-    # UTC
-    pass
+    h = run_test("TC-PROT-005", 200, [
+        {"fault_type": "current_step", "at_ms": 0, "duration_ms": 200, "current_a": -20.0},
+        {"fault_type": "temperature_ramp", "at_ms": 0, "duration_ms": 200, "cell_idx": 0, "ramp_rate": -500.0}
+    ])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x08) != 0
 
 @verifies("SWR-009")
 def test_TC_PROT_006():
@@ -92,10 +93,10 @@ def test_TC_PROT_007():
     # Response time <= 100ms
     h = SILHarness("TC-PROT-007")
     h.run(150)
-    h.inputs.contactor_req = True
-    h.run(50)
+    h.vcu_contactor_req = True
+    h.run(60)
     assert h.trace[-1]["contactor_close"] == True
-    h.inject("current_step", at_ms=200, duration_ms=100, current_a=200.0)
+    h.inject("current_step", at_ms=210, duration_ms=100, current_a=200.0)
     h.run(100)
     h.save_trace()
     assert h.trace[-1]["contactor_close"] == False
@@ -104,6 +105,7 @@ def test_TC_PROT_007():
 def test_TC_COMM_001():
     # Timeout
     h = SILHarness("TC-COMM-001")
+    h.inject("can_loss", at_ms=0, duration_ms=350)
     h.run(350)
     h.save_trace()
     assert h.trace[-1]["state"] == 3
@@ -111,24 +113,33 @@ def test_TC_COMM_001():
 
 @verifies("SWR-017")
 def test_TC_COMM_002():
-    # Timing
-    h = run_test("TC-COMM-002", 500)
-    pass
+    h = run_test("TC-COMM-002", 500, [{"fault_type": "can_loss", "at_ms": 100, "duration_ms": 400}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x80) != 0
 
 @verifies("SWR-018")
 def test_TC_COMM_003():
-    # Timing
-    pass
+    h = run_test("TC-COMM-003", 500, [{"fault_type": "can_delay", "at_ms": 100, "duration_ms": 400, "delay_ms": 350}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x80) != 0
 
 @verifies("SWR-019")
 def test_TC_COMM_004():
-    # Timing
-    pass
+    h = run_test("TC-COMM-004", 500, [{"fault_type": "can_corrupt", "at_ms": 100, "duration_ms": 400}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x80) != 0
 
 @verifies("SWR-030")
 def test_TC_COMM_005():
-    # Comm fault + close
-    pass
+    h = SILHarness("TC-COMM-005")
+    h.run(150)
+    h.vcu_contactor_req = True
+    h.run(60)
+    h.inject("can_loss", at_ms=200, duration_ms=400)
+    h.run(350)
+    h.save_trace()
+    assert h.trace[-1]["state"] == 3
+    assert h.trace[-1]["contactor_close"] == False
 
 def test_TC_SYS_001():
     # Determinism
@@ -169,3 +180,29 @@ def test_TC_PROT_012():
     # UV on cell 2
     run_test("TC-PROT-012", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 2, "voltage": 2.7}])
 
+
+import ctypes
+def test_struct_layout():
+    fields = [f[0] for f in BMS_State._fields_]
+    c_code = '#include <stdio.h>\n#include <stddef.h>\n#include "bms.h"\nint main() {\n'
+    c_code += '    printf("size:%zu\\n", sizeof(bms_t));\n'
+    for f in fields:
+        c_code += f'    printf("{f}:%zu\\n", offsetof(bms_t, {f}));\n'
+    c_code += '    return 0;\n}\n'
+    import tempfile, subprocess, os
+    with tempfile.TemporaryDirectory() as tmpdir:
+        c_file = os.path.join(tmpdir, "check.c")
+        exe = os.path.join(tmpdir, "check")
+        with open(c_file, "w") as f:
+            f.write(c_code)
+        bms_h_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../firmware/include"))
+        subprocess.run(["gcc", "-I", bms_h_dir, c_file, "-o", exe], check=True)
+        out = subprocess.check_output([exe], text=True)
+    c_offsets = {}
+    for line in out.strip().split('\n'):
+        k, v = line.split(':')
+        c_offsets[k] = int(v)
+    assert c_offsets["size"] == ctypes.sizeof(BMS_State), f"Size mismatch: C={c_offsets['size']} Py={ctypes.sizeof(BMS_State)}"
+    for f in fields:
+        py_offset = getattr(BMS_State, f).offset
+        assert c_offsets[f] == py_offset, f"Offset mismatch for {f}: C={c_offsets[f]} Py={py_offset}"

@@ -67,6 +67,8 @@ class BMS_State(ctypes.Structure):
         ("fault_msg_counter", ctypes.c_uint8),
         ("low_current_count", ctypes.c_uint8),
         ("contactor_closed", ctypes.c_bool),
+        ("soc", ctypes.c_float),
+        ("soc_initialized", ctypes.c_bool),
     ]
 
 bms_lib.bms_init.argtypes = [ctypes.POINTER(BMS_State)]
@@ -79,6 +81,9 @@ class VirtualCANBus:
     
     def send(self, msg):
         self.bus.send(msg)
+
+    def shutdown(self):
+        self.bus.shutdown()
         
     def recv(self, timeout=0):
         return self.bus.recv(timeout)

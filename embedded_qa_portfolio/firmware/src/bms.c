@@ -114,6 +114,28 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         bms->faults |= BMS_FAULT_SIG_TEMP;
     }
 
+
+    if (!bms->soc_initialized && cells_ok) {
+        uint32_t sum_mv = 0;
+        for (int i = 0; i < BMS_NUM_CELLS; i++) {
+            sum_mv += in->cell_mv[i];
+        }
+        float avg_v = (float)sum_mv / (float)(BMS_NUM_CELLS * 1000.0f);
+        float current_a = (float)in->current_ma / 1000.0f;
+        float ocv = avg_v + current_a * ((float)BMS_NOMINAL_DCR_MOHM / 1000.0f);
+        bms->soc = (ocv - 3.0f) / 1.2f;
+        if (bms->soc > 1.0f) bms->soc = 1.0f;
+        if (bms->soc < 0.0f) bms->soc = 0.0f;
+        bms->soc_initialized = true;
+    } else if (bms->soc_initialized) {
+        float current_a = (float)in->current_ma / 1000.0f;
+        float dt_h = (float)BMS_TASK_PERIOD_MS / 3600000.0f;
+        float dq = current_a * dt_h;
+        bms->soc -= dq / 100.0f;
+        if (bms->soc > 1.0f) bms->soc = 1.0f;
+        if (bms->soc < 0.0f) bms->soc = 0.0f;
+    }
+
     /* Protection checks */
     bool any_ov = false;
     bool any_uv = false;
@@ -218,7 +240,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         f->data[3] = (uint8_t)(current_da & 0xFF);
         f->data[4] = (uint8_t)((current_da >> 8) & 0xFF);
         
-        f->data[5] = 255; // SOC = SNA
+        f->data[5] = bms->soc_initialized ? (uint8_t)(bms->soc * 200.0f) : 255;
         f->data[6] = bms->status_msg_counter++ & 0x0F;
     }
     

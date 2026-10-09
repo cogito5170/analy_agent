@@ -77,6 +77,8 @@ typedef struct {
     uint8_t fault_msg_counter;
     uint8_t low_current_count;
     bool contactor_closed;
+    float soc;
+    bool soc_initialized;
 } bms_t;
 
 void bms_init(bms_t *bms);

@@ -59,6 +59,8 @@ def rig(request):
         r = SilRig(request)
         yield r
         r.save_trace()
+        if hasattr(r.harness, 'bus'):
+            r.harness.bus.shutdown()
     else:
         yield HwRig()
 

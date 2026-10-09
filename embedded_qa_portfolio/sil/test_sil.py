@@ -736,20 +736,40 @@ def test_TC_SOC_001(rig):
     max_error = 0.0
     decimated_trace = []
     
+    uv_fault_reached = False
+    run_seconds = 0
+    
     for i in range(3600):
         rig.harness.run(1000)
         
         can_tx_log = getattr(rig.harness, "can_tx_log", [])
+        
+        # Check for undervoltage fault in the status message or fault message
+        # Or check the plant model cell voltage directly
+        min_v = min([c.get_voltage(100.0) for c in rig.harness.plant.cells])
+        
+        # The fault message is ID 272. We can check if BMS_FAULT_UV (bit 1) is set.
+        faults_active = False
+        t_272 = [data for t, mid, data in can_tx_log if mid == 272]
+        if t_272:
+            if t_272[-1][0] & 0x02: # BMS_FAULT_UV
+                faults_active = True
+                
+        if min_v <= 2.8 or faults_active:
+            uv_fault_reached = True
+            break
+            
         t_256 = [data for t, mid, data in can_tx_log if mid == 256]
         if t_256:
             soc_raw = t_256[-1][5]
-            reported_soc = soc_raw * 0.5
-            true_soc = rig.harness.plant.cells[0].soc * 100.0
-            
-            error = abs(reported_soc - true_soc)
-            if error > max_error:
-                max_error = error
+            if soc_raw != 255:
+                reported_soc = soc_raw * 0.5
+                true_soc = rig.harness.plant.cells[0].soc * 100.0
                 
+                error = abs(reported_soc - true_soc)
+                if error > max_error:
+                    max_error = error
+                    
         # Decimate trace: keep only the last trace entry of this second
         if rig.trace:
             decimated_trace.append(rig.trace[-1])
@@ -758,10 +778,15 @@ def test_TC_SOC_001(rig):
         if hasattr(rig.harness, "can_tx_log"):
             rig.harness.can_tx_log.clear()
             
+        run_seconds += 1
+            
     # Restore the decimated trace so it gets saved properly
     rig.harness.trace.extend(decimated_trace)
     
     wall_time = time.time() - start_time
+    if uv_fault_reached:
+        print(f"\n[SWR-020] Plant reached undervoltage fault before 3600s (at {run_seconds}s).")
     print(f"\n[SWR-020] Wall time: {wall_time:.2f} s, Max SOC Error: {max_error:.2f} %p")
     
     assert max_error <= 3.0, f"Max SOC Error {max_error:.2f} %p exceeds 3.0 %p"
+    

@@ -23,6 +23,7 @@ class DiscreteCellModel:
         
         # Fault injection states
         self.stuck_voltage = None
+        self.stuck_temperature = None
         self.sensor_offset = 0.0
         self.temp_ramp_rate = 0.0 # K/s
         
@@ -62,7 +63,7 @@ class DiscretePackModel:
             
     def get_outputs(self):
         voltages = [cell.get_voltage(self.i_pack) for cell in self.cells]
-        temperatures = [cell.temp for cell in self.cells]
+        temperatures = [cell.stuck_temperature if cell.stuck_temperature is not None else cell.temp for cell in self.cells]
         true_socs = [cell.soc for cell in self.cells]
         return {
             "cell_voltages": voltages,
@@ -81,3 +82,6 @@ class DiscretePackModel:
     def inject_temperature_ramp(self, cell_idx, ramp_rate):
         self.cells[cell_idx].temp_ramp_rate = ramp_rate
 
+
+    def inject_temperature_stuck(self, cell_idx, temperature):
+        self.cells[cell_idx].stuck_temperature = temperature

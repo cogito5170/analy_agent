@@ -351,6 +351,7 @@ def test_struct_layout():
 def test_TC_PROT_013(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=4.24)
     rig.run(200)
+    assert rig.trace[120]["cell_mv"][0] == 4240
     assert (rig.trace[-1]["faults"] & 0x01) == 0
 
 @pytest.mark.technique("boundary_value")
@@ -358,6 +359,7 @@ def test_TC_PROT_013(rig):
 def test_TC_PROT_014(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=4.26)
     rig.run(200)
+    assert rig.trace[120]["cell_mv"][0] == 4260
     assert (rig.trace[-1]["faults"] & 0x01) != 0
 
 # Boundary tests for SWR-005 (< 2.80 V)
@@ -366,6 +368,7 @@ def test_TC_PROT_014(rig):
 def test_TC_PROT_015(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=2.81)
     rig.run(200)
+    assert rig.trace[120]["cell_mv"][0] == 2810
     assert (rig.trace[-1]["faults"] & 0x02) == 0
 
 @pytest.mark.technique("boundary_value")
@@ -373,22 +376,24 @@ def test_TC_PROT_015(rig):
 def test_TC_PROT_016(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=2.79)
     rig.run(200)
+    assert rig.trace[120]["cell_mv"][0] == 2790
     assert (rig.trace[-1]["faults"] & 0x02) != 0
 
 # Boundary tests for SWR-007 (> 60.0 C)
 @pytest.mark.technique("boundary_value")
 @verifies("SWR-007")
 def test_TC_PROT_017(rig):
-    # offset +25 => wait, base is 25C. 25 + 34.9 = 59.9
-    rig.inject(fault_type="sensor_offset", at_ms=100, duration_ms=50, cell_idx=0, offset=34.9)
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=50, cell_idx=0, temperature=59.9)
     rig.run(200)
+    assert rig.trace[120]["temp_ddegc"][0] == 599
     assert (rig.trace[-1]["faults"] & 0x04) == 0
 
 @pytest.mark.technique("boundary_value")
 @verifies("SWR-007")
 def test_TC_PROT_018(rig):
-    rig.inject(fault_type="sensor_offset", at_ms=100, duration_ms=50, cell_idx=0, offset=35.1)
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=50, cell_idx=0, temperature=60.1)
     rig.run(200)
+    assert rig.trace[120]["temp_ddegc"][0] == 601
     assert (rig.trace[-1]["faults"] & 0x04) != 0
 
 # Boundary tests for SWR-008 (< 0.0 C charging)
@@ -396,16 +401,20 @@ def test_TC_PROT_018(rig):
 @verifies("SWR-008")
 def test_TC_PROT_019(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=-10.0)
-    rig.inject(fault_type="sensor_offset", at_ms=100, duration_ms=50, cell_idx=0, offset=-24.9) # 0.1 C
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=50, cell_idx=0, temperature=0.1)
     rig.run(200)
+    assert rig.trace[120]["temp_ddegc"][0] == 1
+    assert rig.trace[120]["current_ma"] == -10000
     assert (rig.trace[-1]["faults"] & 0x08) == 0
 
 @pytest.mark.technique("boundary_value")
 @verifies("SWR-008")
 def test_TC_PROT_020(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=-10.0)
-    rig.inject(fault_type="sensor_offset", at_ms=100, duration_ms=50, cell_idx=0, offset=-25.1) # -0.1 C
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=50, cell_idx=0, temperature=-0.1)
     rig.run(200)
+    assert rig.trace[120]["temp_ddegc"][0] == -1
+    assert rig.trace[120]["current_ma"] == -10000
     assert (rig.trace[-1]["faults"] & 0x08) != 0
 
 # Boundary tests for SWR-009 (Discharge > 150 A)
@@ -414,6 +423,7 @@ def test_TC_PROT_020(rig):
 def test_TC_PROT_021(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=149.0)
     rig.run(200)
+    assert rig.trace[120]["current_ma"] == 149000
     assert (rig.trace[-1]["faults"] & 0x10) == 0
 
 @pytest.mark.technique("boundary_value")
@@ -421,6 +431,7 @@ def test_TC_PROT_021(rig):
 def test_TC_PROT_022(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=151.0)
     rig.run(200)
+    assert rig.trace[120]["current_ma"] == 151000
     assert (rig.trace[-1]["faults"] & 0x10) != 0
 
 # Boundary tests for SWR-009 (Charge > 50 A)
@@ -429,6 +440,7 @@ def test_TC_PROT_022(rig):
 def test_TC_PROT_023(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=-49.0)
     rig.run(200)
+    assert rig.trace[120]["current_ma"] == -49000
     assert (rig.trace[-1]["faults"] & 0x10) == 0
 
 @pytest.mark.technique("boundary_value")
@@ -436,6 +448,7 @@ def test_TC_PROT_023(rig):
 def test_TC_PROT_024(rig):
     rig.inject(fault_type="current_step", at_ms=100, duration_ms=50, current_a=-51.0)
     rig.run(200)
+    assert rig.trace[120]["current_ma"] == -51000
     assert (rig.trace[-1]["faults"] & 0x10) != 0
 
 # Other SWRs
@@ -651,12 +664,13 @@ def test_TC_MEAS_001(rig):
 def test_TC_MEAS_002(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=0.49)
     rig.run(200)
+    assert rig.trace[120]["cell_mv"][0] == 490
     assert (rig.trace[-1]["faults"] != 0)
 
 @pytest.mark.technique("boundary_value")
 @verifies("SWR-003")
 def test_TC_MEAS_003(rig):
-    # -41.0 C
-    rig.inject(fault_type="sensor_offset", at_ms=100, duration_ms=50, cell_idx=0, offset=-66.0)
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=50, cell_idx=0, temperature=-40.1)
     rig.run(200)
+    assert rig.trace[120]["temp_ddegc"][0] == -401
     assert (rig.trace[-1]["faults"] != 0)

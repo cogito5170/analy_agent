@@ -153,6 +153,8 @@ class SILHarness:
             self.plant.inject_voltage_stuck(i, None)
             self.plant.inject_sensor_offset(i, 0.0)
             self.plant.inject_temperature_ramp(i, 0.0)
+            if hasattr(self.plant, 'inject_temperature_stuck'):
+                self.plant.inject_temperature_stuck(i, None)
             
         # Apply active faults to plant or inputs
         for f in active_faults:
@@ -164,6 +166,8 @@ class SILHarness:
                 self.plant.inject_sensor_offset(f["params"]["cell_idx"], f["params"]["offset"])
             elif f["type"] == "temperature_ramp":
                 self.plant.inject_temperature_ramp(f["params"]["cell_idx"], f["params"]["ramp_rate"])
+            elif f["type"] == "temperature_stuck":
+                self.plant.inject_temperature_stuck(f["params"]["cell_idx"], f["params"]["temperature"])
 
         if self.time_ms % 10 == 0:
             self.plant.step_10ms(current)

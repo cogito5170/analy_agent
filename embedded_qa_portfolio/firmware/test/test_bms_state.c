@@ -481,6 +481,7 @@ static void test_swr_030_comm_loss_contactor_handling(void)
 }
 
 
+/* @verifies SWR-019 */
 static void test_swr_019_escalation(void)
 {
     step_n(10);
@@ -512,6 +513,7 @@ static void test_swr_019_escalation(void)
     TEST_ASSERT_EQUAL(BMS_FAULT_COMM | BMS_FAULT_OV, faults_tx);
 }
 
+/* @verifies SWR-016 SWR-031 */
 static void test_counter_resync(void)
 {
     send_vcu_cmd(0, 0, false);
@@ -537,6 +539,7 @@ static void test_counter_resync(void)
     TEST_ASSERT_NOT_EQUAL(0, out.faults & BMS_FAULT_COMM);
 }
 
+/* @verifies SWR-016 */
 static void test_counter_wrap(void)
 {
     send_vcu_cmd(0, 15, false);
@@ -547,6 +550,7 @@ static void test_counter_wrap(void)
     TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
 }
 
+/* @verifies SWR-030 */
 static void test_swr_030_reset(void)
 {
     step_n(15);

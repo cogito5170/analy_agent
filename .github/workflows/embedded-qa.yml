@@ -21,6 +21,8 @@ jobs:
       - run: pip install pyyaml
       - name: Requirement quality check
         run: python tools/req_check.py
+      - name: D4 Traceability Matrix
+        run: python tools/d4_matrix.py
       - name: DBC consistency check (database vs firmware header)
         run: python tools/dbc_lint.py can/bms.dbc --header firmware/include/bms.h
       - name: Test-case tag check (D2 guideline)
@@ -30,7 +32,10 @@ jobs:
       - name: Install SIL dependencies
         run: pip install pytest python-can
       - name: SIL tests
-        run: cd sil && PYTHONPATH=.. pytest test_sil.py -v
+        run: cd sil && PYTHONPATH=.. pytest test_sil.py -v --junitxml=../report.xml
+      - name: Generate SIL test report
+        if: always()
+        run: python tools/sil_report.py
 
       - name: Tool tests
         run: python -m unittest discover -s tests -v

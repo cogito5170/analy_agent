@@ -2,14 +2,13 @@ import pytest
 import os
 import subprocess
 from pathlib import Path
+subprocess.run(["make", "-C", str(Path(__file__).parent)], check=True)
 from sil.harness import SILHarness
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "verifies(req_id): mark test as verifying a requirement")
     config.addinivalue_line("markers", "technique(name): boundary_value, state_transition, fault_injection, timeout")
     
-    sil_dir = Path(__file__).parent
-    subprocess.run(["make", "-C", str(sil_dir)], check=True)
 
 class SilRig:
     def __init__(self, request):

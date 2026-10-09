@@ -1,1 +1,5 @@
 build/
+evidence/
+sil/bms_sil.so
+__pycache__/
+.pytest_cache/

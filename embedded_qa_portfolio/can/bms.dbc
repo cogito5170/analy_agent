@@ -78,3 +78,4 @@ BA_ "GenMsgSendType" BO_ 2016 "Event";
 BA_ "GenMsgSendType" BO_ 2024 "Event";
 
 VAL_ 256 State 0 "INIT" 1 "STANDBY" 2 "CLOSED" 3 "FAULT" ;
+VAL_ 256 SOC 255 "Not Available" ;

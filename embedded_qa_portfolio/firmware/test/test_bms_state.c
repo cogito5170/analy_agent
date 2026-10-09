@@ -545,9 +545,9 @@ static void test_counter_wrap(void)
     send_vcu_cmd(0, 15, false);
     step_n(1);
     
-    send_vcu_cmd(0, 0, false);
+    send_vcu_cmd(1, 0, false);
     step_n(1);
-    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    TEST_ASSERT_TRUE(out.contactor_close);
 }
 
 /* @verifies SWR-030 */

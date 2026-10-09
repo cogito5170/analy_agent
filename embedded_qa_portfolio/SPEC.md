@@ -169,16 +169,16 @@
   7. DTC: 고장별 상태 바이트(testFailed, confirmedDTC 비트)
 - **완료 기준:** `-Wall -Wextra -Werror`로 경고 0개 빌드, 동적 메모리 미사용, 10 ms 태스크 1회 실행이 호스트에서 결정적(같은 입력이면 같은 출력)
 
-### C3. 플랜트 모델 — Must (Simulink), Should (back-to-back)
+### C3. 플랜트 모델 — Must (Python), Should (back-to-back)
 - **근거:** [A13, A02, A07]
 - **입력:** 전류 프로파일, 초기 SOC, 주변 온도
 - **출력:** 셀 단자 전압 4개, 셀 온도, 팩 전류
 - **핵심 기능**
-  1. Simulink 등가회로 모델: OCV(SOC) + R0 + 1RC, 집중 열 모델. 학교 라이선스로 작성하며, CI에서는 실행하지 않음
-  2. 같은 수식의 Python 모델을 CI용으로 둔다
-  3. back-to-back: 같은 전류 프로파일 3종에 대한 두 모델의 출력을 CSV로 비교
+  1. 해석적 레퍼런스(Analytic reference): 사용자 결정(10-09)에 따라 Simulink 모델을 대체. 전류가 조각 단위로 일정한 구간에 대한 정확한 해석해를 별도 코드로 작성
+  2. 10 ms 이산 Python 모델을 CI용으로 둔다 (Simulink 모델은 라이선스 확인 후 TODO)
+  3. back-to-back: 같은 전류 프로파일 3종에 대한 두 모델(이산 Python과 해석적 레퍼런스)의 출력을 CSV로 비교
   4. 결함 주입 지점: 셀 단락·개방에 해당하는 전압 고착, 센서 오프셋, 온도 급상승
-- **완료 기준:** 3개 프로파일에서 두 모델의 셀 전압 차이 최대값이 허용 기준(가정: 5 mV) 이하이고, 결과 CSV와 비교 리포트가 저장됨. 사용한 MATLAB 툴박스 목록 기록(TODO: 학교 라이선스 구성 확인)
+- **완료 기준:** 3개 프로파일에서 두 모델의 셀 전압 차이 최대값이 허용 기준(가정: 5 mV) 이하이고, 결과 CSV와 비교 리포트가 저장됨.
 
 ### C4. SIL 리그 (가상 HIL) — Must
 - **근거:** [A07, A09, A02]
@@ -299,7 +299,7 @@
 | 2 | SVP·TC 가이드라인 초안, DBC v1과 검사기, CI 골격, **빌드 컨테이너·빌드 지표(C12)** | D1, D2 초안, `can/bms.dbc`, `ci/`, CI 녹색 | 10 | 요구사항·DBC 검사 통과, CI 녹색, 재현성 검사 통과 |
 | 3 | 펌웨어: 측정 처리, 보호 상태 머신 + 단위 테스트 | `firmware/app/`, Unity 시험 | 10 | 보호 관련 SWR의 단위 시험 존재 |
 | 4 | 펌웨어: CAN 송수신·타임아웃·E2E, 정적 분석 | cppcheck 리포트, D8 | 10 | cppcheck error 0, statement 커버리지 80% 이상 |
-| 5 | Simulink 플랜트 + Python 모델 + back-to-back, (Should) ngspice | C3 산출물, D6 | 10 | 3개 프로파일 오차 기준 이내 |
+| 5 | Python 플랜트 + 해석적 레퍼런스 back-to-back (Simulink=TODO after licence check), (Should) ngspice | C3 산출물, D6 | 10 | 3개 프로파일 오차 기준 이내 |
 | 6 | SIL 리그(ctypes·lockstep·결함 주입) | `sil/`, 시나리오 15종 | 10 | 결정성 검사 통과 |
 | 7 | pytest 시험군, 추적 매트릭스 생성기 | TC 60개 이상, D4 | 10 | test 방법 SWR 100% 연결 |
 | 8 | UDS(ISO-TP, 서비스 5개), **키트 구입 관문** | C6 시험 | 10 | Must 구성요소 C1~C8 완료. 미완료 시 키트 구입하지 않음 |

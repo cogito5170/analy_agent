@@ -25,6 +25,8 @@ jobs:
         run: python tools/dbc_lint.py can/bms.dbc --header firmware/include/bms.h
       - name: Test-case tag check (D2 guideline)
         run: python tools/tc_tag_check.py
+      - name: Plant model tests
+        run: python -m unittest discover -s plant -v
       - name: Tool tests
         run: python -m unittest discover -s tests -v
 

@@ -1,6 +1,7 @@
 import pytest
 import json
 import hashlib
+import ast
 from sil.harness import SILHarness, BMS_State
 from sil.utils import verifies
 
@@ -12,6 +13,21 @@ def run_test(tc_id, duration_ms, faults=None):
     h.run(duration_ms)
     h.save_trace()
     return h
+
+def test_TC_QA_001_assertions():
+    # Parse this file and check that every function starting with test_ has an assert
+    with open(__file__, "r") as f:
+        tree = ast.parse(f.read())
+    
+    no_asserts = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
+            # skip itself to avoid false positive if we count the assert below?
+            # actually this function has an assert below.
+            has_assert = any(isinstance(n, ast.Assert) for n in ast.walk(node))
+            if not has_assert:
+                no_asserts.append(node.name)
+    assert not no_asserts, f"Tests missing assertions: {no_asserts}"
 
 @verifies("SWR-012")
 def test_TC_STAT_001():
@@ -111,21 +127,29 @@ def test_TC_COMM_001():
     assert h.trace[-1]["state"] == 3
     assert (h.trace[-1]["faults"] & 0x80) != 0 # BMS_FAULT_COMM
 
-@verifies("SWR-017")
+@verifies("SWR-015")
 def test_TC_COMM_002():
     h = run_test("TC-COMM-002", 500, [{"fault_type": "can_loss", "at_ms": 100, "duration_ms": 400}])
     assert h.trace[-1]["state"] == 3
     assert (h.trace[-1]["faults"] & 0x80) != 0
 
-@verifies("SWR-018")
+@verifies("SWR-015")
 def test_TC_COMM_003():
     h = run_test("TC-COMM-003", 500, [{"fault_type": "can_delay", "at_ms": 100, "duration_ms": 400, "delay_ms": 350}])
     assert h.trace[-1]["state"] == 3
     assert (h.trace[-1]["faults"] & 0x80) != 0
 
-@verifies("SWR-019")
+@verifies("SWR-016")
 def test_TC_COMM_004():
-    h = run_test("TC-COMM-004", 500, [{"fault_type": "can_corrupt", "at_ms": 100, "duration_ms": 400}])
+    # Corrupt frames should be ignored (SWR-016)
+    h = SILHarness("TC-COMM-004")
+    h.inject("can_corrupt", at_ms=100, duration_ms=400)
+    h.run(150)
+    h.vcu_contactor_req = True
+    h.run(100)
+    assert h.trace[-1]["contactor_close"] == False
+    assert h.trace[-1]["state"] in (1, 3)
+    h.run(200)
     assert h.trace[-1]["state"] == 3
     assert (h.trace[-1]["faults"] & 0x80) != 0
 
@@ -135,11 +159,60 @@ def test_TC_COMM_005():
     h.run(150)
     h.vcu_contactor_req = True
     h.run(60)
-    h.inject("can_loss", at_ms=200, duration_ms=400)
-    h.run(350)
+    h.inject("current_step", at_ms=200, duration_ms=600, current_a=10.0)
+    h.inject("can_loss", at_ms=200, duration_ms=600)
+    h.run(350) # to 560ms
     h.save_trace()
     assert h.trace[-1]["state"] == 3
+    assert h.trace[-1]["contactor_close"] == True
+    
+    h.inject("current_step", at_ms=560, duration_ms=200, current_a=4.0)
+    h.run(20) # 2 samples
+    assert h.trace[-1]["contactor_close"] == True
+    h.run(10) # 3rd sample
     assert h.trace[-1]["contactor_close"] == False
+
+def test_TC_COMM_006():
+    # No-fault control test
+    h = SILHarness("TC-COMM-006")
+    h.run(1000)
+    assert h.trace[-1]["state"] == 1 # STANDBY
+    assert h.trace[-1]["faults"] == 0
+
+@verifies("SWR-017")
+def test_TC_MSG_001():
+    h = SILHarness("TC-MSG-001")
+    h.run(1000)
+    tx_log = getattr(h, "can_tx_log", [])
+    t_msg = [t for t, mid, _ in tx_log if mid == 256]
+    assert len(t_msg) > 5
+    periods = [t_msg[i] - t_msg[i-1] for i in range(1, len(t_msg))]
+    assert all(p == 100 for p in periods)
+    print(f"BMS_Status period: {periods[0]} ms")
+
+@verifies("SWR-018")
+def test_TC_MSG_002():
+    h = SILHarness("TC-MSG-002")
+    h.run(1000)
+    tx_log = getattr(h, "can_tx_log", [])
+    for msg_id, name in [(257, "BMS_CellV"), (258, "BMS_Temp")]:
+        t_msg = [t for t, mid, _ in tx_log if mid == msg_id]
+        assert len(t_msg) > 5
+        periods = [t_msg[i] - t_msg[i-1] for i in range(1, len(t_msg))]
+        assert all(p == 100 for p in periods)
+        print(f"{name} period: {periods[0]} ms")
+
+@verifies("SWR-019")
+def test_TC_MSG_003():
+    h = SILHarness("TC-MSG-003")
+    h.inject("current_step", at_ms=212, duration_ms=200, current_a=200.0)
+    h.run(500)
+    fault_time = next((tr["time_ms"] for tr in h.trace if tr["state"] == 3), None)
+    t_272 = [t for t, mid, _ in getattr(h, "can_tx_log", []) if mid == 272]
+    assert len(t_272) > 0
+    latency = t_272[0] - fault_time
+    assert latency <= 10
+    print(f"BMS_Fault latency: {latency} ms")
 
 def test_TC_SYS_001():
     # Determinism
@@ -154,32 +227,35 @@ def test_TC_SYS_001():
     assert hash1 == hash2
     print(f"Determinism proof: TC-SYS-001 {hash1} vs {hash2}")
 
-# Additional fault scenarios to reach >= 15 fault scenarios
 @verifies("SWR-004")
 def test_TC_PROT_008():
-    # OV on cell 1
-    run_test("TC-PROT-008", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 1, "voltage": 4.3}])
+    h = run_test("TC-PROT-008", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 1, "voltage": 4.3}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x01) != 0
 
 @verifies("SWR-004")
 def test_TC_PROT_009():
-    # OV on cell 2
-    run_test("TC-PROT-009", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 2, "voltage": 4.3}])
+    h = run_test("TC-PROT-009", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 2, "voltage": 4.3}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x01) != 0
 
 @verifies("SWR-004")
 def test_TC_PROT_010():
-    # OV on cell 3
-    run_test("TC-PROT-010", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 3, "voltage": 4.3}])
+    h = run_test("TC-PROT-010", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 3, "voltage": 4.3}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x01) != 0
 
 @verifies("SWR-005")
 def test_TC_PROT_011():
-    # UV on cell 0
-    run_test("TC-PROT-011", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 0, "voltage": 2.7}])
+    h = run_test("TC-PROT-011", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 0, "voltage": 2.7}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x02) != 0
 
 @verifies("SWR-005")
 def test_TC_PROT_012():
-    # UV on cell 2
-    run_test("TC-PROT-012", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 2, "voltage": 2.7}])
-
+    h = run_test("TC-PROT-012", 200, [{"fault_type": "sensor_stuck", "at_ms": 150, "duration_ms": 50, "cell_idx": 2, "voltage": 2.7}])
+    assert h.trace[-1]["state"] == 3
+    assert (h.trace[-1]["faults"] & 0x02) != 0
 
 import ctypes
 def test_struct_layout():

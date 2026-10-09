@@ -30,7 +30,7 @@ jobs:
       - name: Install SIL dependencies
         run: pip install pytest python-can
       - name: SIL tests
-        run: PYTHONPATH=. pytest sil -v
+        run: cd sil && PYTHONPATH=.. pytest test_sil.py -v
 
       - name: Tool tests
         run: python -m unittest discover -s tests -v

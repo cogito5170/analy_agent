@@ -183,6 +183,8 @@ class SILHarness:
                 f = self.outputs.can_tx[i]
                 msg = can.Message(arbitration_id=f.id, data=list(f.data)[:f.dlc], is_extended_id=False)
                 self.bus.send(msg)
+                if not hasattr(self, "can_tx_log"): self.can_tx_log = []
+                self.can_tx_log.append((self.time_ms, f.id, bytes(f.data)[:f.dlc]))
 
         self.trace.append({
             "time_ms": self.time_ms,

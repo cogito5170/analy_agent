@@ -71,3 +71,10 @@ docker run --rm -v "$PWD/..":/work -w /work/embedded_qa_portfolio bms-ci bash ci
 # 컨테이너 없이 (ARM 컴파일러가 없으면 ARM 단계는 skipped)
 bash ci/pipeline.sh build/ci        # 결과: build/ci/metrics.json, build/ci/summary.md
 ```
+
+## Running SIL Tests
+To run the SIL tests, you must run pytest from within the `sil/` directory to avoid the `can/` directory at the root of the portfolio from shadowing the `python-can` package:
+```bash
+cd sil
+PYTHONPATH=.. pytest test_sil.py
+```

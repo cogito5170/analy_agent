@@ -480,6 +480,114 @@ static void test_swr_030_comm_loss_contactor_handling(void)
     TEST_ASSERT_FALSE(out.contactor_close);
 }
 
+
+/* @verifies SWR-019 */
+static void test_swr_019_escalation(void)
+{
+    step_n(10);
+    // Comm fault
+    send_vcu_cmd(0, 0, false);
+    step_n(1);
+    send_vcu_cmd(0, 2, false);
+    step_n(1);
+    send_vcu_cmd(0, 4, false);
+    step_n(1);
+    send_vcu_cmd(0, 6, false);
+    step_n(1);
+    
+    out.can_tx_count = 0;
+    
+    // Comm fault active, now OV
+    in.cell_mv[0] = 4251;
+    step_n(3);
+    
+    bool found = false;
+    uint8_t faults_tx = 0;
+    for (int i=0; i<out.can_tx_count; i++) {
+        if (out.can_tx[i].id == 272) {
+            found = true;
+            faults_tx = out.can_tx[i].data[0];
+        }
+    }
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL(BMS_FAULT_COMM | BMS_FAULT_OV, faults_tx);
+}
+
+/* @verifies SWR-016 SWR-031 */
+static void test_counter_resync(void)
+{
+    send_vcu_cmd(0, 0, false);
+    step_n(1);
+    
+    // One lost frame -> jumps to 2
+    send_vcu_cmd(0, 2, false);
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    // Next frame is 3, should be accepted without fault
+    send_vcu_cmd(0, 3, false);
+    step_n(1);
+    TEST_ASSERT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+    
+    // 3 consecutive bad checksums
+    send_vcu_cmd(0, 4, true);
+    step_n(1);
+    send_vcu_cmd(0, 5, true);
+    step_n(1);
+    send_vcu_cmd(0, 6, true);
+    step_n(1);
+    TEST_ASSERT_NOT_EQUAL(0, out.faults & BMS_FAULT_COMM);
+}
+
+/* @verifies SWR-016 */
+static void test_counter_wrap(void)
+{
+    send_vcu_cmd(0, 15, false);
+    step_n(1);
+    
+    send_vcu_cmd(1, 0, false);
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+}
+
+/* @verifies SWR-030 */
+static void test_swr_030_reset(void)
+{
+    step_n(15);
+    in.contactor_req = true;
+    step_n(1);
+    
+    in.current_ma = 10000;
+    
+    send_vcu_cmd(1, 0, false);
+    step_n(1);
+    send_vcu_cmd(1, 2, false);
+    step_n(1);
+    send_vcu_cmd(1, 4, false);
+    step_n(1);
+    send_vcu_cmd(1, 6, false);
+    step_n(1);
+    
+    TEST_ASSERT_EQUAL(BMS_STATE_FAULT, out.state);
+    
+    in.current_ma = 4000;
+    step_n(1);
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    
+    in.current_ma = 6000;
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    
+    in.current_ma = 4000;
+    step_n(1);
+    step_n(1);
+    TEST_ASSERT_TRUE(out.contactor_close);
+    
+    step_n(1);
+    TEST_ASSERT_FALSE(out.contactor_close);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -508,5 +616,9 @@ int main(void)
     RUN_TEST(test_swr_019);
         RUN_TEST(test_determinism);
     RUN_TEST(test_swr_030_comm_loss_contactor_handling);
+    RUN_TEST(test_swr_030_reset);
+    RUN_TEST(test_counter_wrap);
+    RUN_TEST(test_counter_resync);
+    RUN_TEST(test_swr_019_escalation);
 return UNITY_END();
 }

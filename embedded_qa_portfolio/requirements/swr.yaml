@@ -211,7 +211,7 @@ requirements:
     area: communication
     split_from: SWR-015
   - id: SWR-031
-    text: VCU_Cmd 프레임이 SWR-016에 따라 연속 3프레임 거부되면 BMS는 통신 고장으로 판정해야 한다.
+    text: VCU_Cmd 프레임이 SWR-016에 따라 연속 3프레임 거부되면 BMS는 통신 고장으로 판정해야 한다. 단, 체크섬이 유효한 프레임이 거부된 경우 해당 프레임의 카운터를 새로운 기준으로 동기화하여 단일 프레임 손실이 통신 고장으로 이어지지 않도록 한다.
     parent: [SG-05, FN-01]
     method: test
     priority: must

@@ -60,6 +60,7 @@ void bms_can_rx(bms_t *bms, bms_inputs_t *in, const bms_can_frame_t *frame) {
                 if (bms->vcu_cmd_reject_count >= 3) {
                     bms->faults |= BMS_FAULT_COMM;
                 }
+                bms->vcu_cmd_counter = counter; // resync reference
                 return;
             }
         }
@@ -217,7 +218,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
         f->data[3] = (uint8_t)(current_da & 0xFF);
         f->data[4] = (uint8_t)((current_da >> 8) & 0xFF);
         
-        f->data[5] = 100; // SOC = 50%
+        f->data[5] = 255; // SOC = SNA
         f->data[6] = bms->status_msg_counter++ & 0x0F;
     }
     
@@ -246,7 +247,7 @@ void bms_step(bms_t *bms, const bms_inputs_t *in, bms_outputs_t *out)
     }
     
     if (bms->faults != 0) {
-        if (prev_faults == 0) {
+        if ((bms->faults & ~prev_faults) != 0) {
             bms->fault_timer = 100; // Force immediate tx SWR-019
         }
         bms->fault_timer = (uint16_t)(bms->fault_timer + BMS_TASK_PERIOD_MS);

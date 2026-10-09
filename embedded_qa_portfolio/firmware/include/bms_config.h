@@ -10,6 +10,10 @@
 #define BMS_NUM_CELLS 4
 #define BMS_NUM_TEMPS 2
 
+#define BMS_NOMINAL_CAPACITY_AH 100.0f
+#define BMS_NOMINAL_DCR_MOHM 2
+
+
 #define BMS_TASK_PERIOD_MS 10           /* SWR-001 */
 
 /* Signal plausibility (SWR-002, SWR-003) */

@@ -38,7 +38,7 @@
 | 환경 | 구성 | 상태 |
 |---|---|---|
 | E1 호스트 빌드 | `ci/Dockerfile` 이미지: gcc, CMake, gcov, ARM 크로스 컴파일러 | 2주차 구축, CI 녹색 |
-| E2 SIL 리그 | 펌웨어 공유 라이브러리 + Python 플랜트 모델 + 가상 CAN 버스, 1 ms lockstep | 6주차 예정 |
+| E2 SIL 리그 | 펌웨어 공유 라이브러리 + Python 플랜트 모델 + 가상 CAN 버스, 1 ms lockstep | 완료 |
 | E3 실버스 리그 | STM32 보드 + USB-CAN 어댑터 (모델 TODO) | 8주차 관문에서 결정 |
 
 환경의 한계는 결과 리포트에 함께 적는다. 특히 SIL의 시간은 시뮬레이션 시간이고, MCU 실행 시간이 아니다.

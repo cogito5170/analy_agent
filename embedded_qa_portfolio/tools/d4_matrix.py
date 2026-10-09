@@ -54,6 +54,8 @@ def main():
     with open(repo_root / "traceability_matrix.md", "w", encoding="utf-8") as f:
         f.write("\n".join(matrix_lines))
         
+    unique_tcs = set(sum(linked.values(), []))
+    print(f"Requirement TCs: {len(unique_tcs)}")
     print(f"Total SWRs: {total_swrs}")
     print(f"Test-method SWRs: {num_test_swrs}")
     print(f"Linked test-method SWRs: {linked_test_swrs}")

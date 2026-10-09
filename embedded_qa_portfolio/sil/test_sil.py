@@ -20,7 +20,14 @@ def test_TC_QA_001_assertions():
                 if isinstance(child, ast.Assert):
                     if isinstance(child.test, ast.Constant) and child.test.value in (True, 1):
                         continue
-                    has_valid_assert = True
+                    is_trivial = False
+                    for sub in ast.walk(child.test):
+                        if isinstance(sub, ast.Name) and sub.id == 'len':
+                            is_trivial = True
+                        if isinstance(sub, ast.Constant) and sub.value == 'time_ms':
+                            is_trivial = True
+                    if not is_trivial:
+                        has_valid_assert = True
                 elif isinstance(child, ast.Call):
                     if isinstance(child.func, ast.Attribute) and child.func.attr == "inject":
                         has_inject = True
@@ -509,12 +516,6 @@ def test_TC_STAT_004(rig):
     assert rig.trace[-1]["contactor_close"] == False
 
 @pytest.mark.technique("state_transition")
-@verifies("SWR-020")
-def test_TC_SOC_001(rig):
-    # Just a placeholder that might fail or pass
-    rig.inject(fault_type="current_step", at_ms=0, duration_ms=100, current_a=10.0)
-    rig.run(200)
-    assert rig.trace[-1]["time_ms"] >= 9
 
 @pytest.mark.technique("state_transition")
 @verifies("SWR-021")
@@ -591,8 +592,16 @@ def test_TC_UDS_008(rig):
 @pytest.mark.technique("state_transition")
 @verifies("SWR-001")
 def test_TC_MEAS_001(rig):
-    rig.run(10)
-    assert len(rig.trace[-1]["cell_mv"]) == 4
+    rig.inject(fault_type="current_step", at_ms=0, duration_ms=200, current_a=150.5)
+    rig.run(200)
+    tx_log = getattr(rig, "can_tx_log", [])
+    
+    t_256 = [data for t, mid, data in tx_log if mid == 256]
+    assert len(t_256) > 0
+    last_status = t_256[-1]
+    current_raw = int.from_bytes(last_status[3:5], byteorder='little', signed=True)
+    current_meas = current_raw * 0.1
+    assert abs(current_meas - 150.5) <= 0.5
 
 @pytest.mark.technique("boundary_value")
 @verifies("SWR-002")
@@ -663,6 +672,54 @@ def test_TC_MEAS_009(rig):
 @verifies("SWR-004")
 def test_TC_PROT_025(rig):
     rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=50, cell_idx=0, voltage=0.49)
+    rig.run(200)
+    assert rig.trace[-1]["state"] == 3
+    assert rig.trace[-1]["contactor_close"] == False
+
+@pytest.mark.technique("boundary_value")
+@verifies("SWR-004")
+def test_TC_PROT_026(rig):
+    rig.vcu_contactor_req = True
+    rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=20, cell_idx=0, voltage=0.49)
+    rig.run(200)
+    assert rig.trace[-1]["state"] == 2
+    assert rig.trace[-1]["contactor_close"] == True
+
+@pytest.mark.technique("boundary_value")
+@verifies("SWR-004")
+def test_TC_PROT_027(rig):
+    rig.vcu_contactor_req = True
+    rig.inject(fault_type="sensor_stuck", at_ms=100, duration_ms=30, cell_idx=0, voltage=0.49)
+    rig.run(200)
+    assert rig.trace[-1]["state"] == 3
+    assert rig.trace[-1]["contactor_close"] == False
+
+@pytest.mark.technique("state_transition")
+@verifies("SWR-011")
+def test_TC_STAT_005(rig):
+    rig.run(150)
+    rig.inject(fault_type="current_step", at_ms=150, duration_ms=200, current_a=200.0)
+    rig.run(100)
+    assert rig.trace[-1]["state"] == 3
+    rig.vcu_contactor_req = True
+    rig.run(100)
+    assert rig.trace[-1]["state"] == 3
+    assert rig.trace[-1]["contactor_close"] == False
+
+@pytest.mark.technique("boundary_value")
+@verifies("SWR-007")
+def test_TC_PROT_028(rig):
+    rig.vcu_contactor_req = True
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=20, cell_idx=0, temperature=61.0)
+    rig.run(200)
+    assert rig.trace[-1]["state"] == 2
+    assert rig.trace[-1]["contactor_close"] == True
+
+@pytest.mark.technique("boundary_value")
+@verifies("SWR-007")
+def test_TC_PROT_029(rig):
+    rig.vcu_contactor_req = True
+    rig.inject(fault_type="temperature_stuck", at_ms=100, duration_ms=30, cell_idx=0, temperature=61.0)
     rig.run(200)
     assert rig.trace[-1]["state"] == 3
     assert rig.trace[-1]["contactor_close"] == False

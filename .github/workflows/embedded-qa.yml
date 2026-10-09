@@ -27,6 +27,11 @@ jobs:
         run: python tools/tc_tag_check.py
       - name: Plant model tests
         run: python -m unittest discover -s plant -v
+      - name: Install SIL dependencies
+        run: pip install pytest python-can
+      - name: SIL tests
+        run: PYTHONPATH=. pytest sil -v
+
       - name: Tool tests
         run: python -m unittest discover -s tests -v
 

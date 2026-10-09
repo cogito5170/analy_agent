@@ -139,7 +139,7 @@ requirements:
     text: 1 C 정전류 방전 3600 s 프로파일에서 BMS가 보고하는 SOC와 플랜트 모델 SOC의 오차는 3 %p 이하여야 한다.
     note: 추정 방식(전류 적산)은 설계 결정이므로 요구사항이 아니라 설계 문서에 둔다.
     parent: [FN-03]
-    method: analysis
+    method: test
     priority: should
     area: soc
 

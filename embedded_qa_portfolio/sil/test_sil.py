@@ -723,3 +723,45 @@ def test_TC_PROT_029(rig):
     rig.run(200)
     assert rig.trace[-1]["state"] == 3
     assert rig.trace[-1]["contactor_close"] == False
+
+@pytest.mark.technique("use_case")
+@verifies("SWR-020")
+def test_TC_SOC_001(rig):
+    import time
+    start_time = time.time()
+    
+    # Apply 1 C discharge (100 A) for 3600 seconds
+    rig.inject(fault_type="current_step", at_ms=0, duration_ms=3600000, current_a=100.0)
+    
+    max_error = 0.0
+    decimated_trace = []
+    
+    for i in range(3600):
+        rig.harness.run(1000)
+        
+        can_tx_log = getattr(rig.harness, "can_tx_log", [])
+        t_256 = [data for t, mid, data in can_tx_log if mid == 256]
+        if t_256:
+            soc_raw = t_256[-1][5]
+            reported_soc = soc_raw * 0.5
+            true_soc = rig.harness.plant.cells[0].soc * 100.0
+            
+            error = abs(reported_soc - true_soc)
+            if error > max_error:
+                max_error = error
+                
+        # Decimate trace: keep only the last trace entry of this second
+        if rig.trace:
+            decimated_trace.append(rig.trace[-1])
+            
+        rig.harness.trace.clear()
+        if hasattr(rig.harness, "can_tx_log"):
+            rig.harness.can_tx_log.clear()
+            
+    # Restore the decimated trace so it gets saved properly
+    rig.harness.trace.extend(decimated_trace)
+    
+    wall_time = time.time() - start_time
+    print(f"\n[SWR-020] Wall time: {wall_time:.2f} s, Max SOC Error: {max_error:.2f} %p")
+    
+    assert max_error <= 3.0, f"Max SOC Error {max_error:.2f} %p exceeds 3.0 %p"

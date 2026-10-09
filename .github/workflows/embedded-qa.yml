@@ -18,6 +18,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Requirement change guard
+        run: |
+          if [[ "${GITHUB_REF}" == refs/heads/vm/* ]]; then
+            git fetch origin main
+            if ! git diff --quiet origin/main -- requirements/swr.yaml; then
+              if ! git log -1 --pretty=%B | grep -qi "approval issue"; then
+                echo "Error: requirements/swr.yaml modified on vm/ branch without approval issue in commit message."
+                exit 1
+              fi
+            fi
+          fi
       - run: pip install pyyaml
       - name: Requirement quality check
         run: python tools/req_check.py

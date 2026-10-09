@@ -1,8 +1,8 @@
 import unittest
 import csv
 import os
-from .model import DiscretePackModel
-from .analytic_reference import AnalyticPackModel
+from plant.model import DiscretePackModel
+from plant.analytic_reference import AnalyticPackModel
 
 class TestPlantModel(unittest.TestCase):
     def run_profile(self, profile_name, steps):

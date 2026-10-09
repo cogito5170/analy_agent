@@ -1,5 +1,5 @@
 import math
-from .model import PlantConfig
+from plant.model import PlantConfig
 
 class AnalyticCellModel:
     def __init__(self):
